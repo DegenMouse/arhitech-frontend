@@ -2,7 +2,6 @@ name: CI - Nuxt 3
 
 on:
   pull_request:
-  push:
     branches:
       - master
       - develop
