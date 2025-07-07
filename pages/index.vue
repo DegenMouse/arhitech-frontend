@@ -39,7 +39,11 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue'
+  // import { useRouter } from 'vue-router'
+  
+  definePageMeta({
+    layout: 'login'
+  })
   // import { useRouter } from 'vue-router'
 
   const config = useRuntimeConfig()
