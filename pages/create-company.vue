@@ -99,6 +99,7 @@ const createCompany = async () => {
         data = JSON.parse(responseText)
       } catch (parseError) {
         console.log('Response is not JSON:', responseText)
+        console.log(parseError)
         data = { success: true }
       }
     } else {
