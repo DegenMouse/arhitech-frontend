@@ -1,80 +1,110 @@
 <template>
-  <div class="p-8 bg-gray-50 min-h-full flex items-center justify-center">
-    <div class="max-w-md w-full space-y-8">
-      <div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Company Access
-        </h2>
-        <p class="mt-2 text-center text-sm text-gray-600">
-          Join or view your company
-        </p>
-      </div>
-
-      <div v-if="!showJoinForm" class="space-y-4">
-        <button
-          @click="showJoinForm = true"
-          class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+  <div class="p-8">
+    <h2 class="text-2xl font-bold mb-4">Join Company</h2>
+    <p class="text-gray-600 mb-6">Enter the company ID to join a company</p>
+    
+    <div class="max-w-sm">
+      <label class="block mb-2 text-sm font-medium text-gray-700">Company ID</label>
+      <input 
+        v-model="companyId" 
+        type="text"
+        class="w-full p-3 border border-gray-300 rounded mb-4" 
+        placeholder="Enter company ID"
+        required
+      >
+      
+      <div class="flex gap-2">
+        <button 
+          @click="joinCompany" 
+          :disabled="!companyId.trim()" 
+          class="flex-1 p-3 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Join Company
         </button>
-
-        <button
-          @click="viewCompany"
-          class="group relative w-full flex justify-center py-3 px-4 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        <button 
+          @click="goBack" 
+          class="flex-1 p-3 border border-gray-300 rounded hover:bg-gray-50"
         >
-          View Company
+          Cancel
         </button>
       </div>
-
-      <div v-if="showJoinForm" class="space-y-4">
-        <div>
-          <label for="company-code" class="block text-sm font-medium text-gray-700">
-            Company Code
-          </label>
-          <input
-            id="company-code"
-            v-model="companyCode"
-            type="text"
-            required
-            class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-            placeholder="Enter company code"
-          />
-        </div>
-
-        <div class="flex space-x-3">
-          <button
-            @click="joinCompany"
-            :disabled="!companyCode.trim()"
-            class="flex-1 group relative flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Submit
-          </button>
-          
-          <button
-            @click="showJoinForm = false"
-            class="flex-1 group relative flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
+      
+      <p v-if="error" class="text-red-500 text-sm mt-4">{{ error }}</p>
+      <p v-if="success" class="text-green-500 text-sm mt-4">Successfully joined company!</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-
-const showJoinForm = ref(false)
-const companyCode = ref('')
+const config = useRuntimeConfig()
+const companyId = ref('')
+const error = ref('')
+const success = ref(false)
 
 const joinCompany = async () => {
-  if (!companyCode.value.trim()) return
+  if (!companyId.value.trim()) return
   
-  await navigateTo('/dashboard')
+  const userId = localStorage.getItem('id')
+  const jwt = localStorage.getItem('jwt')
+  
+  if (!userId || !jwt) {
+    error.value = 'User not authenticated'
+    return
+  }
+  
+  const requestBody = {
+    data: {
+      id: userId,
+      type: "users",
+      attributes: {
+        company_id: companyId.value.trim()
+      }
+    }
+  }
+  
+  try {
+    const response = await fetch(`${config.public.apiUrl}/data/users/${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwt}`
+      },
+      body: JSON.stringify(requestBody)
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to join company')
+    }
+    
+    // Fetch company name and update localStorage
+    const companyResponse = await fetch(`${config.public.apiUrl}/data/users/${userId}/company_id`, {
+      headers: {
+        'Authorization': `Bearer ${jwt}`
+      }
+    })
+    
+    if (companyResponse.ok) {
+      const companyData = await companyResponse.json()
+      if (companyData.data && companyData.data.attributes && companyData.data.attributes.name) {
+        localStorage.setItem('company_name', companyData.data.attributes.name)
+      }
+    }
+    
+    success.value = true
+    error.value = ''
+    
+    // Redirect to dashboard after 1 second
+    setTimeout(() => {
+      navigateTo('/dashboard')
+    }, 1000)
+    
+  } catch (err) {
+    error.value = err.message || 'Failed to join company'
+    success.value = false
+  }
 }
 
-const viewCompany = async () => {
-  await navigateTo('/dashboard')
+const goBack = () => {
+  navigateTo('/dashboard')
 }
 </script>
