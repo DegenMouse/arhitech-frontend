@@ -119,7 +119,7 @@ const createCompany = async () => {
     
     // Redirect to dashboard after 1 second
     setTimeout(() => {
-      navigateTo('/dashboard')
+      navigateTo('/')
     }, 1000)
     
   } catch (err) {
@@ -129,6 +129,6 @@ const createCompany = async () => {
 }
 
 const goBack = () => {
-  navigateTo('/dashboard')
+  navigateTo('/')
 }
 </script>

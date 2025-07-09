@@ -5,9 +5,13 @@
     </div>
     
     <nav class="flex-1 p-4">
-      <NuxtLink to="/dashboard" class="block p-2 rounded hover:bg-gray-100" 
-        :class="{ 'bg-gray-100': $route.path === '/dashboard' }">
+      <NuxtLink to="/" class="block p-2 rounded hover:bg-gray-100" 
+        :class="{ 'bg-gray-100': $route.path === '/' }">
         Dashboard
+      </NuxtLink>
+      <NuxtLink to="/companies" class="block p-2 rounded hover:bg-gray-100 mt-1"
+        :class="{ 'bg-gray-100': $route.path === '/companies' }">
+        Companies
       </NuxtLink>
       <NuxtLink to="/projects" class="block p-2 rounded hover:bg-gray-100 mt-1"
         :class="{ 'bg-gray-100': $route.path === '/projects' }">
@@ -16,13 +20,14 @@
     </nav>
     
     <div class="p-4 border-t border-gray-200">
-      <button @click="showMenu = !showMenu" class="w-full p-2 text-left hover:bg-gray-100 rounded">
-        {{ userEmail || 'User' }}
-      </button>
       <div v-if="showMenu" class="mt-2 border border-gray-200 rounded bg-white">
         <button @click="goToAccount" class="w-full p-2 text-left hover:bg-gray-100">Account</button>
         <button @click="logout" class="w-full p-2 text-left hover:bg-gray-100 text-red-600">Logout</button>
       </div>
+      <button @click="showMenu = !showMenu" class="w-full p-2 text-left hover:bg-gray-100 rounded mt-2">
+        {{ userEmail || 'User' }}
+      </button>
+      
     </div>
   </div>
 </template>
@@ -43,7 +48,7 @@ const logout = () => {
   localStorage.removeItem('id')
   localStorage.removeItem('company_name')
   showMenu.value = false
-  navigateTo('/')
+  navigateTo('/login')
 }
 
 const goToAccount = () => {
