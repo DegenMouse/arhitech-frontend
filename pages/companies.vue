@@ -1,7 +1,6 @@
 <template>
   <div class="p-8">
-    {{ company.value?.isInCompany ?? 'not found' }}
-    <!-- <div v-if="isInCompany">
+    <div v-if="company.isInCompany">
       <h2 class="text-3xl font-semibold text-gray-800 mb-4">{{ company.companyName }}</h2>
       <p class="text-gray-600 mb-6">This is your company.</p>
     </div>
@@ -18,7 +17,7 @@
           Join Company
           </button>
       </div>
-    </div> -->
+    </div>
   </div>
 </template>
   

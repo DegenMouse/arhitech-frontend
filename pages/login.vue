@@ -93,6 +93,8 @@ const errorMessage = ref('Username or password is incorrect')
 function handleLogin() {
   console.log('handleLogin called')
   if (email.value && password.value) {
+    notAuth.value = false
+
     const apiUrl = config.public.apiUrl
     console.log('Logging in with', email.value, password.value)
 
@@ -114,15 +116,6 @@ function handleLogin() {
 
       if(data.jwt){
         localStorage.setItem('jwt', data.jwt)
-        const decodedJwt = JSON.parse(atob(data.jwt.split('.')[1]))
-        localStorage.setItem('email', decodedJwt.email)
-        localStorage.setItem('id', decodedJwt.id)
-
-        fetch(apiUrl + `/data/users/${decodedJwt.id}/company_id`).then(res => res.json())
-        .then(data => {
-          console.log(data)
-          localStorage.setItem('company_name', data.data.attributes.name)
-        })
         
         navigateTo('/')
       } 
