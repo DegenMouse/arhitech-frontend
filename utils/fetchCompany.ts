@@ -20,5 +20,16 @@ export default function() : Promise<void> {
             company.value.isAdmin = false
         }
         // console.log(company.value.isInCompany)
+    }).then(() => {
+        fetch(dbApi + '/data/admins/' + auth.value.id)
+        .then(res => {
+            if(!res.ok){
+                console.log("not admin")
+                company.value.isAdmin = false
+            }else{
+                console.log("admin")
+                company.value.isAdmin = true
+            }
+        })
     })
 }

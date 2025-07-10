@@ -9,6 +9,12 @@ export default defineNuxtRouteMiddleware((to, from) => {
     }
 
     if(to.path === '/noComp' && company.value.isInCompany){
-        return navigateTo('/companies')
+        to.path = '/companies'
+    }
+
+    if(to.path === '/companies' && company.value.isAdmin){
+        return navigateTo('/companyAdmin')
+    }else{
+        return navigateTo('/companyMember')
     }
   })
