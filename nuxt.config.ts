@@ -7,7 +7,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiUrl: "https://dbapi01.softaccel.net/apis/arhiTech",
+      dbApi: "https://dbapi01.softaccel.net/apis/arhiTech",
     },
   }
 })

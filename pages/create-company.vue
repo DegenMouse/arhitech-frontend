@@ -77,7 +77,7 @@ const createCompany = async () => {
   }
   
   try {
-    const response = await fetch(`${config.public.apiUrl}/data/companies/`, {
+    const response = await fetch(`${config.public.dbApi}/data/companies/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

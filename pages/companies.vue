@@ -1,39 +1,103 @@
 <template>
-  <div class="p-8">
-    <div v-if="company.isInCompany">
-      <h2 class="text-3xl font-semibold text-gray-800 mb-4">{{ company.companyName }}</h2>
-      <p class="text-gray-600 mb-6">This is your company.</p>
-    </div>
-      
-    <div v-else class="max-w-md">
-      <h2 class="text-3xl font-semibold text-gray-800 mb-4">No Company Found</h2>
-      <p class="text-gray-600 mb-6">You need to be part of a company to use the dashboard.</p>
-      
-      <div class="space-y-4">
-          <button @click="createCompany" class="w-full p-3 bg-blue-600 text-white rounded hover:bg-blue-700">
-          Create Company
+  <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div class="w-full max-w-lg">
+      <div v-if="company.isInCompany" class="text-center">
+        <div class="bg-white rounded-xl shadow-lg p-8">
+          <h2 class="text-3xl font-bold text-gray-800 mb-4">{{ company.companyName }}</h2>
+          <p class="text-lg text-gray-600 mb-6">This is your company.</p>
+          <button 
+            @click="showLeaveModal = true"
+            class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Leave Company
           </button>
-          <button @click="joinCompany" class="w-full p-3 border border-blue-600 text-blue-600 rounded hover:bg-blue-50">
-          Join Company
+        </div>
+      </div>
+        
+      <div v-else class="space-y-6">
+        <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+          <button @click="createCompany" class="w-full max-w-sm h-16 bg-gray-800 text-white text-lg font-semibold rounded-lg hover:bg-gray-700 transform hover:scale-102 transition-all duration-200 shadow-md hover:shadow-lg">
+            Create Company
           </button>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+          <button @click="showJoinModal = true" class="w-full max-w-sm h-16 bg-gray-600 text-white text-lg font-semibold rounded-lg hover:bg-gray-500 transform hover:scale-102 transition-all duration-200 shadow-md hover:shadow-lg">
+            Join Company
+          </button>
+        </div>
       </div>
     </div>
+    
+    <!-- Join Company Modal -->
+    <ModalsJoinCompany v-if="showJoinModal"
+      @close="showJoinModal = false"
+    />
+    
+    <!-- Confirm Leave Company Modal -->
+    <ModalsConfirm 
+      v-if="showLeaveModal"
+      title="Leave Company"
+      message="Are you sure you want to leave this company? This action cannot be undone."
+      confirm-text="Leave Company"
+      @close="showLeaveModal = false"
+      @confirm="handleLeaveCompany"
+    />
+    
+    <!-- Error Modal -->
+    <ModalsError 
+      v-if="showErrorModal"
+      :title="errorTitle"
+      :message="errorMessage"
+      @close="showErrorModal = false"
+    />
   </div>
 </template>
   
 <script setup>
-const { company } = useUser()
-// const isInCompany = ref(company.value.isInCompany)
-// console.log("isInCompany.value")
-// console.log(isInCompany.value)
+// import JoinCompanyModal from '~/components/modals/join-company.vue'
+const dbApi = useRuntimeConfig().public.dbApi
+const { auth, company } = useUser()
 
-  
-  
-// const createCompany = () => {
-// navigateTo('/create-company')
-// }
+const showJoinModal = ref(false)
+const showLeaveModal = ref(false)
+const showErrorModal = ref(false)
+const errorTitle = ref('')
+const errorMessage = ref('')
 
-// const joinCompany = () => {
-// navigateTo('/join-company')
-// }
+const createCompany = () => {
+  navigateTo('/create-company')
+}
+
+const handleLeaveCompany = () => {
+  console.log('Leaving company')
+  fetch(dbApi + '/data/users/' + auth.value.id, {
+    method: 'PATCH',
+    body: JSON.stringify({
+        data: {
+            id: auth.value.id,
+            attributes: {
+                company_id: null
+            }
+        }
+    })
+  }).then(res => {
+    if(!res.ok){
+      errorTitle.value = 'Failed to Leave Company'
+      errorMessage.value = 'There was an error while trying to leave the company. Please try again.'
+      showErrorModal.value = true
+      throw new Error('Failed to leave company')
+    }
+    return res.json()
+  }).then(() => {
+    fetchCompany()
+  }).catch(err => {
+    console.error(err)
+    if (!showErrorModal.value) {
+      errorTitle.value = 'Network Error'
+      errorMessage.value = 'Unable to connect to the server. Please check your internet connection and try again.'
+      showErrorModal.value = true
+    }
+  })
+}
 </script>

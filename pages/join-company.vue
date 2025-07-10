@@ -63,7 +63,7 @@ const joinCompany = async () => {
   }
   
   try {
-    const response = await fetch(`${config.public.apiUrl}/data/users/${userId}`, {
+    const response = await fetch(`${config.public.dbApi}/data/users/${userId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ const joinCompany = async () => {
     }
     
     // Fetch company name and update localStorage
-    const companyResponse = await fetch(`${config.public.apiUrl}/data/users/${userId}/company_id`, {
+    const companyResponse = await fetch(`${config.public.dbApi}/data/users/${userId}/company_id`, {
       headers: {
         'Authorization': `Bearer ${jwt}`
       }

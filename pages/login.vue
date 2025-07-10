@@ -57,7 +57,7 @@
           />
         </label>
   
-        <p v-if="notAuth" class="text-red-500 text-sm mb-4">{{ errorMessage }}</p>
+        <p v-if="error" class="text-red-500 text-sm mb-4">{{ errorMessage }}</p>
         <button
           type="submit"
           class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
@@ -82,56 +82,49 @@ definePageMeta({
 })
 
 const config = useRuntimeConfig()
+const dbApi = config.public.dbApi
 
-const notAuth = ref(false)
+const error = ref(false)
 const isSignUp = ref(false)
 const name = ref('')
 const email = ref('')
 const password = ref('')
-const errorMessage = ref('Username or password is incorrect')
+const errorMessage = ref('')
 
 function handleLogin() {
-  console.log('handleLogin called')
   if (email.value && password.value) {
-    notAuth.value = false
-
-    const apiUrl = config.public.apiUrl
-    console.log('Logging in with', email.value, password.value)
+    error.value = false
 
     const formData = new FormData();
     formData.append("email", email.value);
     formData.append("password", password.value);
 
-    fetch(apiUrl + '/auth/login/', {
+    fetch(dbApi + '/auth/login/', {
       method: 'POST',
       body: formData
     }).then(res => {
       if(!res.ok){
-        notAuth.value = true
+        error.value = true
+        errorMessage.value = 'Username or password is incorrect'
         throw new Error('Login failed')
       }
       return res.json()
     }).then(data => {
-      console.log(data)
-
       if(data.jwt){
         localStorage.setItem('jwt', data.jwt)
-        
         navigateTo('/')
       } 
-      
-    }).catch(error => {
-      console.error(error)
-    })
+    }).catch(error => {console.error(error)})
+  }else{
+    error.value = true
+    errorMessage.value = 'Please fill in all fields'
   }
 }
 
 function handleSignUp() {
-  console.log('handleSignUp called', {name: name.value, email: email.value, password: password.value})
-  if (name.value && email.value && password.value) {
-    const apiUrl = config.public.apiUrl
-    console.log('Signing up with', name.value, email.value, password.value)
-    
+  if(name.value && email.value && password.value){
+    error.value = false
+
     const requestBody = {
       data: {
         attributes: {
@@ -143,26 +136,20 @@ function handleSignUp() {
       }
     }
     
-    fetch(apiUrl + '/data/users', {
+    fetch(dbApi + '/data/users', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify(requestBody)
     }).then(res => {
       if(!res.ok){
-        notAuth.value = true
+        error.value = true
         errorMessage.value = 'Sign up failed'
         throw new Error('Sign up failed')
       }
       return res.json()
-    }).then(data => {
-      console.log(data)
-      // After successful signup, automatically log in
-      handleLogin()
-    }).catch(error => {
-      console.error(error)
-    })
+    }).then(() => { handleLogin() }).catch(error => { console.error(error) })
+  }else{
+    error.value = true
+    errorMessage.value = 'Please fill in all fields'
   }
 }
 </script>
