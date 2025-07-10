@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
     <div class="w-full max-w-lg">
-      <div v-if="company.isInCompany" class="text-center">
+      <div class="text-center">
         <div class="bg-white rounded-xl shadow-lg p-8">
           <h2 class="text-3xl font-bold text-gray-800 mb-4">{{ company.companyName }}</h2>
           <p class="text-lg text-gray-600 mb-6">This is your company.</p>
@@ -13,26 +13,7 @@
           </button>
         </div>
       </div>
-        
-      <div v-else class="space-y-6">
-        <div class="bg-white rounded-xl shadow-lg p-8 text-center">
-          <button @click="createCompany" class="w-full max-w-sm h-16 bg-gray-800 text-white text-lg font-semibold rounded-lg hover:bg-gray-700 transform hover:scale-102 transition-all duration-200 shadow-md hover:shadow-lg">
-            Create Company
-          </button>
-        </div>
-        
-        <div class="bg-white rounded-xl shadow-lg p-8 text-center">
-          <button @click="showJoinModal = true" class="w-full max-w-sm h-16 bg-gray-600 text-white text-lg font-semibold rounded-lg hover:bg-gray-500 transform hover:scale-102 transition-all duration-200 shadow-md hover:shadow-lg">
-            Join Company
-          </button>
-        </div>
-      </div>
     </div>
-    
-    <!-- Join Company Modal -->
-    <ModalsJoinCompany v-if="showJoinModal"
-      @close="showJoinModal = false"
-    />
     
     <!-- Confirm Leave Company Modal -->
     <ModalsConfirm 
@@ -59,15 +40,11 @@
 const dbApi = useRuntimeConfig().public.dbApi
 const { auth, company } = useUser()
 
-const showJoinModal = ref(false)
 const showLeaveModal = ref(false)
 const showErrorModal = ref(false)
 const errorTitle = ref('')
 const errorMessage = ref('')
 
-const createCompany = () => {
-  navigateTo('/create-company')
-}
 
 const handleLeaveCompany = () => {
   console.log('Leaving company')
