@@ -1,11 +1,14 @@
-export default function() : void {
+export default function() : Promise<void> {
     const { auth, company } = useUser()
     const config = useRuntimeConfig()
     const dbApi = config.public.dbApi
-    console.log("fetching company data")
-    console.log(dbApi + '/data/users/' + auth.value.id + '/company_id')
-    fetch(dbApi + '/data/users/' + auth.value.id + '/company_id')
-    .then(res => res.json())
+    return fetch(dbApi + '/data/users/' + auth.value.id + '/company_id')
+    .then(res => {
+        if(!res.ok){
+            throw new Error('response not ok')
+        }
+        return res.json()
+    })
     .then(data => {
         const companyData = data.data
         if(!(Array.isArray(companyData) && companyData.length == 0)){
@@ -17,7 +20,5 @@ export default function() : void {
             company.value.isAdmin = false
         }
         // console.log(company.value.isInCompany)
-    }).catch(err => {
-        console.error('Failed to fetch company data:', err)
     })
 }

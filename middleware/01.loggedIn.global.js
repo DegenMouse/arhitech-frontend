@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineNuxtRouteMiddleware(async (to, from) => {
   
   if (import.meta.server) return
 
@@ -24,7 +24,9 @@ export default defineNuxtRouteMiddleware((to, from) => {
         }
         
         //fetch company that user is in
-        fetchCompany()
+        await fetchCompany().catch(err => {
+          console.error('Failed to fetch company:', err)
+        })
         
       } catch (err) {
         console.error('JWT is not valid:', err)

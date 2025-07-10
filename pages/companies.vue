@@ -4,7 +4,6 @@
       <div class="text-center">
         <div class="bg-white rounded-xl shadow-lg p-8">
           <h2 class="text-3xl font-bold text-gray-800 mb-4">{{ company.companyName }}</h2>
-          <p class="text-lg text-gray-600 mb-6">This is your company.</p>
           <button 
             @click="showLeaveModal = true"
             class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -27,10 +26,10 @@
     
     <!-- Error Modal -->
     <ModalsError 
-      v-if="showErrorModal"
-      :title="errorTitle"
-      :message="errorMessage"
-      @close="showErrorModal = false"
+      v-if="error.show"
+      :title="error.title"
+      :message="error.message"
+      @close="error.show = false"
     />
   </div>
 </template>
@@ -41,14 +40,17 @@ const dbApi = useRuntimeConfig().public.dbApi
 const { auth, company } = useUser()
 
 const showLeaveModal = ref(false)
-const showErrorModal = ref(false)
-const errorTitle = ref('')
-const errorMessage = ref('')
+
+const error = reactive({
+  show: false,
+  title: '',
+  message: ''
+})
 
 
-const handleLeaveCompany = () => {
+const handleLeaveCompany = async () => {
   console.log('Leaving company')
-  fetch(dbApi + '/data/users/' + auth.value.id, {
+  await fetch(dbApi + '/data/users/' + auth.value.id, {
     method: 'PATCH',
     body: JSON.stringify({
         data: {
@@ -60,21 +62,31 @@ const handleLeaveCompany = () => {
     })
   }).then(res => {
     if(!res.ok){
-      errorTitle.value = 'Failed to Leave Company'
-      errorMessage.value = 'There was an error while trying to leave the company. Please try again.'
-      showErrorModal.value = true
+      error.title = 'Failed to Leave Company'
+      error.message = 'There was an error while trying to leave the company. Please try again.'
+      error.show = true
       throw new Error('Failed to leave company')
     }
     return res.json()
   }).then(() => {
-    fetchCompany()
+    fetchCompany().then(() => {
+      navigateTo('/noComp')
+    }).catch(err => {
+      console.error('Failed to fetch company:', err)
+      error.title = 'Error retrieving company'
+      error.message = "This error might resolve with a page reload"
+      error.show = true
+      throw new Error('Failed to fetch company')
+    })
   }).catch(err => {
     console.error(err)
-    if (!showErrorModal.value) {
-      errorTitle.value = 'Network Error'
-      errorMessage.value = 'Unable to connect to the server. Please check your internet connection and try again.'
-      showErrorModal.value = true
+    if (!error.show) {
+      error.title = 'Network Error'
+      error.message = 'Unable to connect to the server. Please check your internet connection and try again.'
+      error.show = true
     }
   })
+
+  
 }
 </script>
