@@ -1,7 +1,4 @@
-export default defineNuxtRouteMiddleware(async (to, from) => {
-  
-  if (import.meta.server) return
-
+export default async function () {
   const { auth, profile, company } = useUser()
   
   //check if user is logged in so that this isnt run on every page load
@@ -29,14 +26,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         })
         
       } catch (err) {
-        console.error('JWT is not valid:', err)
+        console.error('JWT processing error:', err)
       }
     }
   }
-  
-  //not logged in users can only see : (/login and /)
-  if(to.path != '/' && to.path != '/login' && !auth.value.isLoggedIn){
-    console.log("not logged in")
-    return abortNavigation()
-  }
-})
+}
