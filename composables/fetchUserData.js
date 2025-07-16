@@ -1,5 +1,5 @@
 export default async function () {
-  const { auth, profile, company } = useUser()
+  const { auth, profile } = useUser()
   
   //check if user is logged in so that this isnt run on every page load
   if(!auth.value.isLoggedIn){

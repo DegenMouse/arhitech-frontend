@@ -20,7 +20,7 @@
     </nav>
     
     <div @click="toggleMenu = !toggleMenu" class="p-4 border-t border-gray-200">
-      <div v-if="toggleMenu" class="mt-2 border border-gray-200 rounded bg-white">
+      <div v-if="toggleMenu && auth.isLoggedIn" class="mt-2 border border-gray-200 rounded bg-white">
         <NuxtLink to="/account" class="w-full p-2 text-left hover:bg-gray-100 block">Account</NuxtLink>
         <button @click="logout" class="w-full p-2 text-left hover:bg-gray-100 text-red-600">Logout</button>
       </div>

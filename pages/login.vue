@@ -83,6 +83,7 @@ definePageMeta({
 
 const config = useRuntimeConfig()
 const dbApi = config.public.dbApi
+const { auth } = useUser()
 
 const error = ref(false)
 const isSignUp = ref(false)
@@ -112,6 +113,7 @@ function handleLogin() {
     }).then(data => {
       if(data.jwt){
         localStorage.setItem('jwt', data.jwt)
+        auth.value.reEvalRequired = true
         navigateTo('/')
       } 
     }).catch(error => {console.error(error)})
@@ -129,7 +131,7 @@ function handleSignUp() {
       data: {
         attributes: {
           id: "",
-          name: name.value,
+          username: name.value,
           email: email.value,
           password: password.value
         }
@@ -145,8 +147,7 @@ function handleSignUp() {
         errorMessage.value = 'Sign up failed'
         throw new Error('Sign up failed')
       }
-      return res.json()
-    }).then(() => { handleLogin() }).catch(error => { console.error(error) })
+    }).then(() => { handleLogin() }).catch(error => { console.error("sign up error", error) })
   }else{
     error.value = true
     errorMessage.value = 'Please fill in all fields'

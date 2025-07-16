@@ -39,8 +39,7 @@
 </template>
 
 <script setup>
-const dbApi = useRuntimeConfig().public.dbApi
-const { auth, company } = useUser()
+const { company } = useUser()
 
 const showLeaveModal = ref(false)
 
@@ -52,44 +51,13 @@ const error = reactive({
 
 
 const handleLeaveCompany = async () => {
-  console.log('Leaving company')
-  await fetch(dbApi + '/data/users/' + auth.value.id, {
-    method: 'PATCH',
-    body: JSON.stringify({
-        data: {
-            id: auth.value.id,
-            attributes: {
-                company_id: null
-            }
-        }
-    })
-  }).then(res => {
-    if(!res.ok){
-      error.title = 'Failed to Leave Company'
-      error.message = 'There was an error while trying to leave the company. Please try again.'
-      error.show = true
-      throw new Error('Failed to leave company')
-    }
-    return res.json()
-  }).then(() => {
-    fetchCompany().then(() => {
+  
+  leaveCompany(error).then(() => {
       navigateTo('/noComp')
     }).catch(err => {
-      console.error('Failed to fetch company:', err)
-      error.title = 'Error retrieving company'
-      error.message = "This error might resolve with a page reload"
-      error.show = true
-      throw new Error('Failed to fetch company')
+      console.error('Failed to leave company:', err)
     })
-  }).catch(err => {
-    console.error(err)
-    if (!error.show) {
-      error.title = 'Network Error'
-      error.message = 'Unable to connect to the server. Please check your internet connection and try again.'
-      error.show = true
-    }
-  })
-
-  
 }
+
+
 </script>

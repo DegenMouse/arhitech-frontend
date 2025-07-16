@@ -2,14 +2,16 @@
   <div class="min-h-screen bg-gray-50 p-4">
     <div class="max-w-4xl mx-auto">
       <!-- Header with company name and leave button -->
-      <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">{{ company.companyName }}</h1>
-        <button 
-          @click="showLeaveModal = true"
-          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
-          Leave Company
-        </button>
+      <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex justify-between items-center">
+          <h1 class="text-3xl font-bold text-gray-800">{{ company.companyName }}</h1>
+          <button 
+            @click="showLeaveModal = true"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Leave Company
+          </button>
+        </div>
       </div>
       
       <!-- Main content area -->
@@ -18,27 +20,24 @@
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <button 
-            @click="manageTeam"
-            class="p-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center"
+            @click="showMembersModal = true"
+            class="p-6 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-center border border-gray-200"
           >
-            <div class="text-2xl mb-2">👥</div>
-            <div class="font-semibold">Manage Team</div>
+            <div class="font-semibold text-lg">Manage Team</div>
           </button>
           
           <button 
-            @click="navigateTo('/company-settings')"
-            class="p-6 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-center"
+            @click="showManageProjectsModal = true"
+            class="p-6 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-center border border-gray-200"
           >
-            <div class="text-2xl mb-2">⚙️</div>
-            <div class="font-semibold">Company Settings</div>
+            <div class="font-semibold text-lg">Manage Projects</div>
           </button>
           
           <button 
-            @click="navigateTo('/create-project')"
-            class="p-6 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-center"
+            @click="showCreateProjectModal = true"
+            class="p-6 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-center border border-gray-200"
           >
-            <div class="text-2xl mb-2">📋</div>
-            <div class="font-semibold">Create Project</div>
+            <div class="font-semibold text-lg">Create Project</div>
           </button>
         </div>
       </div>
@@ -61,6 +60,22 @@
       @close="showMembersModal = false"
       @remove-member="handleRemoveMember"
     />
+
+    <ModalsAdminEditProject 
+      v-if="showCreateProjectModal"
+      :members="members"
+      :isNew="true"
+      @close="showCreateProjectModal = false"
+      @create-project="handleCreateProject"
+    />
+
+    <ModalsAdminManageProjects 
+      v-if="showManageProjectsModal"
+      :projects="projects"
+      :members="members"
+      @close="showManageProjectsModal = false"
+      @reFetchProjects="fetchProjects"
+    />
     
     <!-- Error Modal -->
     <ModalsError 
@@ -79,6 +94,9 @@ const { auth, company } = useUser()
 const showLeaveModal = ref(false)
 const showMembersModal = ref(false)
 const members = ref([])
+const showCreateProjectModal = ref(false)
+const showManageProjectsModal = ref(false)
+const projects = ref([])
 
 const error = reactive({
   show: false,
@@ -86,66 +104,39 @@ const error = reactive({
   message: ''
 })
 
+onMounted(() => {
+  fetchMembers()
+  fetchProjects()
+})
+
 const handleLeaveCompany = async () => {
-  console.log('Leaving company')
-  await fetch(dbApi + '/data/users/' + auth.value.id, {
-    method: 'PATCH',
-    body: JSON.stringify({
-        data: {
-            id: auth.value.id,
-            attributes: {
-                company_id: null
-            }
-        }
-    })
-  }).then(res => {
-    if(!res.ok){
-      error.title = 'Failed to Leave Company'
-      error.message = 'There was an error while trying to leave the company. Please try again.'
-      error.show = true
-      throw new Error('Failed to leave company')
-    }
-    return res.json()
-  }).then(() => {
-    fetchCompany().then(() => {
+
+  leaveCompany(error).then(() => {
       navigateTo('/noComp')
     }).catch(err => {
-      console.error('Failed to fetch company:', err)
-      error.title = 'Error retrieving company'
-      error.message = "This error might resolve with a page reload"
-      error.show = true
-      throw new Error('Failed to fetch company')
+      console.error('Failed to leave company:', err)
     })
-  }).catch(err => {
-    console.error(err)
-    if (!error.show) {
-      error.title = 'Network Error'
-      error.message = 'Unable to connect to the server. Please check your internet connection and try again.'
-      error.show = true
-    }
-  })
 }
 
-const manageTeam = () => {
-  console.log('manageTeam')
-  fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=users').then(res => {
+const fetchMembers = async () => {
+  return fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=users_in_company').then(res => {
     if(!res.ok){
-      throw new Error('Failed to fetch admins')
+      throw new Error('Failed to fetch users in company')
     }
     return res.json()
-  }).then(data => {
-    const provisoryMembers = data.includes;
-    const index = provisoryMembers.findIndex(member => member.id === auth.value.id)
-    if (index > -1) {
-        provisoryMembers.splice(index, 1)
-    }
-    console.log(provisoryMembers)
-    members.value = provisoryMembers;
-    showMembersModal.value = true
+  }).then(async data => {
+    const memberIds = data.includes.map(include => include.relationships.user_id.data.id);
 
-    members.value.forEach(member => {
-        // fetch(dbApi + '/data/users/' + member.id + '/company_id').then(res => {
-    })
+    members.value = await Promise.all(memberIds.map(async memberId => {
+      return await fetch(dbApi + '/data/users/' + memberId).then(res => {
+        if(!res.ok){
+          throw new Error('Failed to fetch user')
+        }
+        return res.json();
+      }).then(data => {
+        return data.data;
+      })
+    }));
   }).catch(err => {
     console.error('Failed to fetch members:', err)
     error.title = 'Failed to Load Members'
@@ -154,13 +145,110 @@ const manageTeam = () => {
   })
 }
 
+
+
 const handleRemoveMember = (memberId) => {
   console.log('Removing member:', memberId)
-  // TODO: Implement member removal logic
-  // For now, just remove from the local array
-//   const index = members.value.findIndex(member => member.id === memberId)
-//   if (index > -1) {
-//     members.value.splice(index, 1)
-//   }
+  
+  
+  fetch(dbApi + '/data/users_in_company/' + memberId, {
+    method: 'DELETE'
+  }).then(res => {
+    if(!res.ok){
+      error.title = 'Failed to Remove Member'
+      error.message = 'Unable to remove member. Please try again.'
+      error.show = true
+      throw new Error('Failed to remove member')
+    }
+  }).then(() => {
+    const index = members.value.findIndex(member => member.id === memberId)
+    if (index > -1) {
+      members.value.splice(index, 1)
+    }
+  })
+}
+
+const fetchProjects = async () => {
+  console.log("fetching projects")
+  fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=projects')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects')
+      }
+      return response.json()
+    })
+    .then(async data => {
+      const projs = data.includes || null
+      if(!projs){
+        console.log("no projects")
+        projects.value = []
+        return
+      }
+      for (let i = 0; i < projs.length; i++) {
+        const response = await fetch(dbApi + '/data/users_in_project/?filter=project_id=' + projs[i].id)
+        if (!response.ok) {
+          throw new Error('Failed to fetch users in project')
+        }
+        const data = await response.json()
+        projs[i].users_in_project = data.data.map(user => {
+          const userId = user.relationships.user_id.data.id
+          return members.value.find(member => member.id === userId) || { id: userId, attributes: { username: 'Unknown User' } }
+        })
+      }
+      projects.value = projs
+    })
+    .catch(err => {
+      console.error('Failed to fetch projects:', err)
+      error.title = 'Failed to Load Projects'
+      error.message = 'Unable to load projects. Please try again.'
+      error.show = true
+    })
+}
+
+const handleCreateProject = (project) => {
+  fetch(dbApi + '/data/projects', {
+    method: 'POST',
+    body: JSON.stringify({
+      data: {
+        attributes: {
+          name: project.name,
+          deadline: project.deadline,
+          company_id: company.value.id,
+          admin_id: auth.value.id
+        }
+      }
+    })
+  }).then(res => {
+    if(!res.ok){
+      throw new Error('Failed to create project')
+    }
+    return res.json()
+  }).then(data => {
+      const projectId = data.data.id
+      project.usersInProject.forEach(userId => {
+        fetch(dbApi + '/data/users_in_project', {
+          method: 'POST',
+          body: JSON.stringify({
+            data: {
+              attributes: {
+                project_id: projectId,
+                user_id: userId
+              }
+            }
+          })
+        }).then(res => {
+          if(!res.ok){
+            throw new Error('Failed to add user to project')
+          }
+        }).catch(err => {
+          console.error('Failed to add user to project:', err)
+        })
+      })
+    }).then(() => {
+      fetchProjects()
+    }).catch(err => {
+      console.error('Failed to create project:', err)
+    })
+  
 }
 </script>

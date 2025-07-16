@@ -33,7 +33,7 @@
     />
 
     <!-- Create Company Modal -->
-    <ModalsCreateCompany 
+    <ModalsLoggedoutCreateCompany 
       v-if="showCreateModal"
       @close="showCreateModal = false"
       @submit="handleCreateCompany"
@@ -65,13 +65,14 @@ const error = reactive({
 
 const handleJoinCompany = async (companyCode) => {
   console.log("handleJoinCompany")
-  await fetch(dbApi + '/data/users/' + auth.value.id, {
-    method: 'PATCH',
+  
+  await fetch(dbApi + '/data/users_in_company', {
+    method: 'POST',
     body: JSON.stringify({
         data: {
-            id: auth.value.id,
             attributes: {
-                company_id: companyCode
+              user_id: auth.value.id,  
+              company_id: companyCode
             }
         }
     })
@@ -109,13 +110,13 @@ const handleCreateCompany = async (companyData) => {
     method: 'POST',
     body: JSON.stringify({
       data: {
-      type: "companies",
-      attributes: {
+        type: "companies",
+        attributes: {
           id: "",
           name: companyData.name.trim(),
           email: companyData.email.trim(),
           userCreated: auth.value.id
-      }
+        }
       }
     })
   }).then(res => {

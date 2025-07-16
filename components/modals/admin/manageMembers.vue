@@ -20,6 +20,7 @@
             :key="member.id"
             class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
           >
+            <!-- {{ member }} -->
             <div class="flex items-center space-x-4">
               <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
                 {{ member.attributes?.username?.charAt(0)?.toUpperCase() || 'U' }}
@@ -42,6 +43,7 @@
                 Admin
               </span>
               <button 
+                v-else
                 @click="removeMember(member.id)"
                 class="px-3 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
               >

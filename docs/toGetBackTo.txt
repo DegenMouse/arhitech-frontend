@@ -1,0 +1,8 @@
+everybody can see user data -> maybe create a VIEW 
+    so that only certain data is visible
+everybody can create a Project and add/rmv users to project
+after modifying a project (adminPanel) only the changed project should be refetched
+when creating a proj. admin should be included by default
+not that happy with error handling UI 
+make composables type safe
+should I keep the logic that is used only once in a page into composables?

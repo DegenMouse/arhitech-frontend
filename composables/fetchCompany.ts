@@ -2,10 +2,10 @@ export default function() : Promise<void> {
     const { auth, company } = useUser()
     const config = useRuntimeConfig()
     const dbApi = config.public.dbApi
-    return fetch(dbApi + '/data/users/' + auth.value.id + '/company_id')
+    return fetch(dbApi + '/data/users_in_company/' + auth.value.id + '/company_id')
     .then(res => {
         if(!res.ok){
-            throw new Error('response not ok')
+            throw new Error('User not in any company')
         }
         return res.json()
     })
@@ -14,10 +14,12 @@ export default function() : Promise<void> {
         if(!(Array.isArray(companyData) && companyData.length == 0)){
             company.value.companyName = data.data.attributes.name
             company.value.isInCompany = true
+            company.value.id = data.data.id
         }else{
             company.value.companyName = ""
             company.value.isInCompany = false
             company.value.isAdmin = false
+            throw new Error('No company found')
         }
         // console.log(company.value.isInCompany)
     }).then(async () => {
