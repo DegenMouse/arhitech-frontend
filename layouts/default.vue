@@ -1,16 +1,9 @@
 <template>
-  <div class="flex">
-    <sidebar />
-    <div class="flex-1">
+  <div class="flex h-screen">
+    <sidebar class="h-screen flex-shrink-0" />
+    <div class="flex-1 h-screen overflow-y-auto">
       <NuxtPage />
     </div>
   </div>
 </template>
-  
-<script setup>
-// isLoggedIn
-// onMounted(() => {
-//   localStorage.getItem('token')
-
-</script>
   

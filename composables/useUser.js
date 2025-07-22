@@ -22,6 +22,7 @@ const company = ref({
   id: null
 })
 
+
 export default function() {
   return { auth, profile, company }
 }

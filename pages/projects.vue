@@ -1,7 +1,5 @@
 <template>
   <div class="p-8">
-    <h1 class="text-2xl font-bold mb-4">My Projects</h1>
-    
     <div v-if="projects.length === 0" class="text-gray-600">
       No projects found.
     </div>
@@ -9,6 +7,7 @@
     <div v-else class="space-y-4">
       <div 
         v-for="project in projects" 
+        @click="navigateTo('/project/' + project.id)"
         :key="project.id"
         class="border border-gray-200 rounded-lg p-4"
       >

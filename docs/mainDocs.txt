@@ -1,0 +1,141 @@
+# Project File Tree
+
+.
+├── app.vue // Root Vue component, sets up the main app shell and layout
+├── components/
+│   ├── sidebar.vue // Main sidebar navigation
+│   └── modals/
+│       ├── file.vue // Fullscreen modal for viewing PDF files
+│       ├── document.vue // Modal for viewing/editing documents (PDF, TXT, images, DOCX, ODT)
+│       ├── uploadFile.vue // Modal for uploading files (single/multi, type restrictions)
+│       ├── success.vue // Green success notification modal
+│       ├── error.vue // Error modal for displaying error messages
+│       ├── inputField.vue // Reusable input field component
+│       ├── confirm.vue // Confirmation modal for critical actions
+│       ├── admin/
+│       │   ├── manageProjects.vue // Modal for viewing/editing all projects in a company
+│       │   ├── editProject.vue // Modal for editing a single project's details
+│       │   └── manageMembers.vue // Modal for managing company members
+│       └── loggedout/
+│           └── createCompany.vue // Modal for creating a new company
+├── composables/
+│   ├── useUser.js // Handles user authentication, state, and company context
+│   ├── fetchMmbProj.js // (Empty or placeholder) - intended for fetching member projects
+│   ├── fetchCompany.ts // Fetches company data from the backend
+│   ├── leaveCompany.js // Handles logic for leaving a company
+│   └── fetchUserData.js // Fetches user data from the backend
+├── docs/
+│   ├── mainDocs.txt // Full project documentation (this file)
+│   └── issues/
+│       ├── ui-optimization.txt // Notes on UI optimization
+│       ├── logic.txt // Notes on project logic
+│       ├── code-structure.txt // Notes on code structure
+│       ├── dbapi.txt // Notes on database API
+│       └── minio-triggers.txt // Notes on MinIO triggers
+├── layouts/
+│   └── default.vue // Main layout for all pages (sidebar + content)
+├── middleware/
+│   ├── loggedIn.global.js // Ensures user is authenticated before accessing protected routes
+│   └── company.global.js // Ensures user is part of a company before accessing company-specific routes
+├── pages/
+│   ├── test.vue // Test/development page for experiments
+│   ├── projects.vue // Lists all projects the user is part of
+│   ├── companyAdmin.vue // Admin dashboard for managing company, team, and projects
+│   ├── login.vue // Login form and authentication logic
+│   ├── noComp.vue // Page shown when user is not part of any company
+│   ├── companyMember.vue // Member dashboard for non-admin users
+│   ├── index.vue // Landing page, shows dashboard or redirect
+│   ├── account.vue // User account settings and profile page
+│   └── project/
+│       └── [id].vue // Dynamic project page (details, docs, modals, actions)
+├── plugins/
+│   └── initialDataLoad.js // Loads initial data (user, company, etc.) on app start
+├── public/
+│   ├── favicon.ico // App favicon
+│   └── robots.txt // Robots exclusion file for search engines
+├── server/
+│   ├── tsconfig.json // TypeScript config for server
+│   └── api/
+│       ├── minio-get.js // API endpoint for MinIO download presigned URL
+│       ├── minio-put.js // API endpoint for MinIO upload presigned URL
+│       ├── minioDocs.txt // Documentation for MinIO API endpoints
+│       └── minio-del.js // API endpoint for MinIO delete presigned URL
+├── utils/
+│   ├── isUUID.ts // Utility to check if a string is a valid UUID
+│   └── isJWTExpired.ts // Utility to check if a JWT token is expired
+├── .github/
+│   └── workflows/
+│       └── ci.yml // Continuous integration workflow config
+├── .gitignore // Git ignore rules
+├── eslint.config.js // ESLint configuration
+├── nuxt.config.ts // Nuxt configuration
+├── package.json // Project dependencies, scripts, and metadata
+├── package-lock.json // Dependency lock file
+├── README.md // Quickstart and basic project info
+├── tsconfig.json // TypeScript configuration
+└── vitest.config.ts // Vitest (testing) configuration
+
+
+---
+
+# App Flow and Page/Modal Interactions
+
+## index.vue
+- Landing/dashboard page.
+- Redirects to login if not authenticated, or to company/project dashboard if authenticated.
+- May show a summary or quick links.
+
+## login.vue
+- User login form.
+- On success, redirects to the appropriate dashboard.
+- May show error modal on failed login.
+
+## account.vue
+- User profile and settings page.
+- Allows editing user info, password, etc.
+- May call success or error modals for feedback.
+
+## companyAdmin.vue
+- Main admin dashboard for a company.
+- Shows company info, team, and projects.
+- Calls modals:
+  - **manageMembers.vue** (admin/manageMembers): Manage team members.
+  - **manageProjects.vue** (admin/manageProjects): View/edit all projects.
+  - **editProject.vue** (admin/editProject): Edit a single project.
+  - **uploadFile.vue**: Upload company/project files.
+  - **success.vue**: Show success notifications.
+  - **error.vue**: Show error notifications.
+  - **confirm.vue**: Confirm destructive actions (remove member, delete project, etc.).
+
+## companyMember.vue
+- Dashboard for non-admin users.
+- Shows projects and company info relevant to the member.
+- May call document, upload, and success modals.
+
+## noComp.vue
+- Shown when user is not part of any company.
+- Calls **createCompany.vue** (modals/loggedout): Modal to create a new company.
+
+## projects.vue
+- Lists all projects the user is a member of.
+- Each project links to its `[id].vue` page.
+
+## pages/project/[id].vue
+- Dynamic project page for a single project.
+- Shows project details, status, and all related documents.
+- Calls modals:
+  - **uploadFile.vue**: Upload new or updated documents.
+  - **document.vue**: View/edit documents (PDF, TXT, images, DOCX, ODT).
+  - **file.vue**: Fullscreen PDF viewer.
+  - **success.vue**: Show success notifications.
+  - **error.vue**: Show error notifications.
+  - **confirm.vue**: Confirm document actions (delete, finish, etc.).
+
+## test.vue
+- Used for development/testing of features and UI.
+- May call any modal for testing purposes.
+
+---
+
+# End of App Flow
+

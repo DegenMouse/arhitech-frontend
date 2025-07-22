@@ -61,6 +61,7 @@
       @remove-member="handleRemoveMember"
     />
 
+    <!-- Create Project Modal -->
     <ModalsAdminEditProject 
       v-if="showCreateProjectModal"
       :members="members"
@@ -69,6 +70,7 @@
       @create-project="handleCreateProject"
     />
 
+    <!-- Manage Projects Modal -->
     <ModalsAdminManageProjects 
       v-if="showManageProjectsModal"
       :projects="projects"
@@ -91,22 +93,32 @@
 const dbApi = useRuntimeConfig().public.dbApi
 const { auth, company } = useUser()
 
+//modal for leaving company
 const showLeaveModal = ref(false)
+
+//modal for managing members
 const showMembersModal = ref(false)
 const members = ref([])
+
+//modal for creating a project
 const showCreateProjectModal = ref(false)
+
+//modal for managing projects
 const showManageProjectsModal = ref(false)
 const projects = ref([])
 
+//error modal data
 const error = reactive({
   show: false,
   title: '',
   message: ''
 })
 
+//fetch members and projects on mount
 onMounted(() => {
-  fetchMembers()
-  fetchProjects()
+  fetchMembers().then(() => {
+    fetchProjects()
+  })
 })
 
 const handleLeaveCompany = async () => {
@@ -118,6 +130,7 @@ const handleLeaveCompany = async () => {
     })
 }
 
+//fetch members that the company has
 const fetchMembers = async () => {
   return fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=users_in_company').then(res => {
     if(!res.ok){
@@ -145,12 +158,62 @@ const fetchMembers = async () => {
   })
 }
 
+//fetch projects for the company
+const fetchProjects = async () => {
 
+  return fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=projects')
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to fetch projects')
+    }
+    return response.json()
+  })
+  .then(async data => {
+    const projs = data.includes || null
+    if(!projs){
+      console.log("no projects")
+      projects.value = []
+      return
+    }
+    
+    const promises = []
+      
+    for (let i = 0; i < projs.length; i++) {
+      const promise = fetch(dbApi + '/data/users_in_project/?filter=project_id=' + projs[i].id)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to fetch users in project')
+          }
+          return response.json()
+        })
+        .then(data => {
+          projs[i].users_in_project = data.data.map(user => {
+            const userId = user.relationships.user_id.data.id
+            return members.value.find(member => member.id === userId) || { id: userId, attributes: { username: 'Unknown User' } }
+          })
+        })
+        .catch(err => {
+          console.error('Failed to fetch users in project:', err)
+        })
+      
+      promises.push(promise)
+    }
+    
+    await Promise.all(promises)
+    
+    projects.value = projs
+  })
+  .catch(err => {
+    console.error('Failed to fetch projects:', err)
+    error.title = 'Failed to Load Projects'
+    error.message = 'Unable to load projects. Please try again.'
+    error.show = true
+  })
+}
 
+// remove a member from the company
 const handleRemoveMember = (memberId) => {
-  console.log('Removing member:', memberId)
-  
-  
+
   fetch(dbApi + '/data/users_in_company/' + memberId, {
     method: 'DELETE'
   }).then(res => {
@@ -168,43 +231,10 @@ const handleRemoveMember = (memberId) => {
   })
 }
 
-const fetchProjects = async () => {
-  console.log("fetching projects")
-  fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=projects')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to fetch projects')
-      }
-      return response.json()
-    })
-    .then(async data => {
-      const projs = data.includes || null
-      if(!projs){
-        console.log("no projects")
-        projects.value = []
-        return
-      }
-      for (let i = 0; i < projs.length; i++) {
-        const response = await fetch(dbApi + '/data/users_in_project/?filter=project_id=' + projs[i].id)
-        if (!response.ok) {
-          throw new Error('Failed to fetch users in project')
-        }
-        const data = await response.json()
-        projs[i].users_in_project = data.data.map(user => {
-          const userId = user.relationships.user_id.data.id
-          return members.value.find(member => member.id === userId) || { id: userId, attributes: { username: 'Unknown User' } }
-        })
-      }
-      projects.value = projs
-    })
-    .catch(err => {
-      console.error('Failed to fetch projects:', err)
-      error.title = 'Failed to Load Projects'
-      error.message = 'Unable to load projects. Please try again.'
-      error.show = true
-    })
-}
-
+//create a project
+//TODO: make dynamic so that it can be used for editing projects as well
+//TODO: the number of input fields should be dynamic 
+// based on the number of editable fields in the db
 const handleCreateProject = (project) => {
   fetch(dbApi + '/data/projects', {
     method: 'POST',

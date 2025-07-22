@@ -39,7 +39,7 @@
               </div>
               <div class="flex space-x-2">
                 <button
-                  @click="editProject(project)"
+                  @click="editProjBtn(project)"
                   class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                 >
                   Edit
@@ -96,11 +96,12 @@ const props = defineProps({
     default: () => []
   }
 })
-const emit = defineEmits(['close', 'reFetchProjects', 'refetch'])
+const emit = defineEmits(['close', 'reFetchProjects'])
 
 const dbApi = useRuntimeConfig().public.dbApi
 
-var editingProject = null
+const showEditProjectModal = ref(false)
+
 var editedProjectId = null
 var oldData = {
   name: '',
@@ -109,14 +110,13 @@ var oldData = {
 }
 
 
-const showEditProjectModal = ref(false)
 
-const editProject = (project) => {
+
+const editProjBtn = (project) => {
   oldData.name = project.attributes?.name || ''
   oldData.deadline = project.attributes?.deadline || ''
   oldData.usersInProject = project.users_in_project?.map(member => member.id) || []
   
-  editingProject = project
   editedProjectId = project.id
 
   showEditProjectModal.value = true
@@ -163,41 +163,39 @@ const handleEditProject = async (newData) => {
   // Add new users to project
   for (const userId of newData.usersInProject) {
     if (!oldData.usersInProject.includes(userId)) {
-      try {
-        const res = await fetch(dbApi + '/data/users_in_project', {
-          method: 'POST',
-          body: JSON.stringify({
-            data: {
-              attributes: {
-                id: "",
-                project_id: editedProjectId,
-                user_id: userId
-              }
+      fetch(dbApi + '/data/users_in_project', {
+        method: 'POST',
+        body: JSON.stringify({
+          data: {
+            attributes: {
+              id: "",
+              project_id: editedProjectId,
+              user_id: userId
             }
-          })
+          }
         })
+      }).then(res => {
         if (!res.ok) {
           throw new Error('Failed to add user to project')
         }
-      } catch (err) {
+      }).catch(err => {
         console.error('Failed to add user to project:', err)
-      }
+      })
     }
   }
 
   // Remove users from project
   for (const userId of oldData.usersInProject) {
     if (!newData.usersInProject.includes(userId)) {
-      try {
-        const res = await fetch(dbApi + '/data/users_in_project/?filter=project_id=' + editedProjectId + ',user_id=' + userId, {
-          method: 'DELETE'
-        })
+      fetch(dbApi + '/data/users_in_project/?filter=project_id=' + editedProjectId + ',user_id=' + userId, {
+        method: 'DELETE'
+      }).then(res => {
         if (!res.ok) {
           throw new Error('Failed to remove user from project')
         }
-      } catch (err) {
+      }).catch(err => {
         console.error('Failed to remove user from project:', err)
-      }
+      })
     }
   }
 
