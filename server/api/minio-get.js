@@ -1,4 +1,11 @@
-// server/api/presign-get.js
+//
+// server/api/minio-get.js
+// ----------------------
+// Nuxt server API route to generate a presigned GET URL for MinIO object storage.
+// Used to securely allow clients to download files from MinIO without exposing credentials.
+// Accepts `path` and optional `bucket` query parameters.
+// Returns a presigned URL valid for 5 minutes.
+//
 import { Client } from 'minio'
 
 export default defineEventHandler(async (event) => {
@@ -9,6 +16,7 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const endpointUrl = new URL(config.public.minioEndpoint)
 
+  // Create MinIO client instance
   const minioClient = new Client({
     endPoint:  endpointUrl.hostname,
     port:      Number(endpointUrl.port) || (endpointUrl.protocol === 'https:' ? 443 : 80),
@@ -17,7 +25,7 @@ export default defineEventHandler(async (event) => {
     secretKey: config.minio.secretAccessKey
   })
 
-  // presign a GET URL valid for 5 minutes
+  // Presign a GET URL valid for 5 minutes
   const url = await minioClient.presignedGetObject(
     bucket || config.public.buckets.companyFiles,
     path,

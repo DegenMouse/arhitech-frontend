@@ -1,4 +1,11 @@
-// server/api/presign-delete.js
+//
+// server/api/minio-del.js
+// ----------------------
+// Nuxt server API route to generate a presigned DELETE URL for MinIO object storage.
+// Used to securely allow clients to delete files from MinIO without exposing credentials.
+// Accepts `key` query parameter for the object key to delete.
+// Returns a presigned URL valid for 5 minutes.
+//
 import { Client } from 'minio'
 
 export default defineEventHandler(async (event) => {
@@ -8,6 +15,7 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const endpointUrl = new URL(config.public.minioEndpoint)
 
+  // Create MinIO client instance
   const minioClient = new Client({
     endPoint:  endpointUrl.hostname,
     port:      Number(endpointUrl.port) || (endpointUrl.protocol === 'https:' ? 443 : 80),
@@ -16,7 +24,7 @@ export default defineEventHandler(async (event) => {
     secretKey: config.minio.secretAccessKey
   })
 
-  // presign a DELETE URL valid for 5 minutes
+  // Presign a DELETE URL valid for 5 minutes
   const url = await minioClient.presignedDeleteObject(
     config.public.bucket,
     key,

@@ -1,6 +1,19 @@
+<!--
+  pages/project/[id].vue
+  ---------------------
+  Dynamic project detail page that displays project information and manages associated documents.
+  Features document categorization into Input/Output sections with status-based grouping.
+  Handles document upload, viewing, and status management (finish/unfinish).
+  Integrates with MinIO for file storage and retrieval using presigned URLs.
+  Provides comprehensive document workflow management with AI processing capabilities.
+  Uses reactive modal states for upload, document viewing, and success notifications.
+-->
 <template>
+  <!-- Main project container -->
   <div class="p-8">
+    <!-- Project content when loaded -->
     <div v-if="project.instance">
+      <!-- Project header with name and phase -->
       <div class="flex items-center gap-4 mb-6">
         <h1 class="text-2xl font-bold">{{ project.instance.attributes?.name || 'Unnamed Project' }}</h1>
         <div class="inline-block bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-medium">
@@ -8,11 +21,12 @@
         </div>
       </div>
       
-      <!-- Input Documents -->
+      <!-- Input Documents Section -->
       <div class="bg-white rounded shadow p-4 mb-6">
         <h2 class="text-base font-medium text-gray-700 mb-2">Input Documents</h2>
+        <!-- Input documents with status-based grouping -->
         <template v-if="docsInput.toUpload.length || docsInput.inProgress.length || docsInput.finished.length">
-          <!-- To Upload -->
+          <!-- To Upload documents -->
           <div v-if="docsInput.toUpload.length" class="mb-2">
             <div class="text-xs text-gray-500 mb-1">To Upload</div>
             <div>
@@ -24,7 +38,7 @@
               </div>
             </div>
           </div>
-          <!-- In Progress -->
+          <!-- In Progress documents -->
           <div v-if="docsInput.inProgress.length" class="mb-2">
             <div class="text-xs text-gray-500 mb-1">In Progress</div>
             <div>
@@ -39,7 +53,7 @@
               </div>
             </div>
           </div>
-          <!-- Finished -->
+          <!-- Finished documents -->
           <div v-if="docsInput.finished.length">
             <div class="text-xs text-gray-500 mb-1">Finished</div>
             <div>
@@ -54,16 +68,18 @@
             </div>
           </div>
         </template>
+        <!-- Empty state for input documents -->
         <div v-else class="text-center py-4 text-gray-400 text-sm">
           <p>No input documents found for this project.</p>
         </div>
       </div>
 
-      <!-- Output Documents -->
+      <!-- Output Documents Section -->
       <div class="bg-white rounded shadow p-4">
         <h2 class="text-base font-medium text-gray-700 mb-2">Output Documents</h2>
+        <!-- Output documents with status-based grouping -->
         <template v-if="docsOutput.toUpload.length || docsOutput.inProgress.length || docsOutput.finished.length">
-          <!-- To Upload -->
+          <!-- To Upload documents -->
           <div v-if="docsOutput.toUpload.length" class="mb-2">
             <div class="text-xs text-gray-500 mb-1">To Upload</div>
             <div>
@@ -75,7 +91,7 @@
               </div>
             </div>
           </div>
-          <!-- In Progress -->
+          <!-- In Progress documents -->
           <div v-if="docsOutput.inProgress.length" class="mb-2">
             <div class="text-xs text-gray-500 mb-1">In Progress</div>
             <div>
@@ -87,7 +103,7 @@
               </div>
             </div>
           </div>
-          <!-- Finished -->
+          <!-- Finished documents -->
           <div v-if="docsOutput.finished.length">
             <div class="text-xs text-gray-500 mb-1">Finished</div>
             <div>
@@ -100,30 +116,27 @@
             </div>
           </div>
         </template>
+        <!-- Empty state for output documents -->
         <div v-else class="text-center py-4 text-gray-400 text-sm">
           <p>No output documents found for this project.</p>
         </div>
       </div>
 
+      <!-- File upload modal -->
       <ModalsUploadFile 
         v-if="uploadModal.show" 
         :singleFile="true" 
         @close="uploadModal.show = false" 
         @upload="docUpload" />
 
-      <!-- <ModalsDocument
-        v-if="documentModal.show"
-        :blob="documentModal.blob"
-        :fileName="documentModal.fileName"
-        @close="documentModal.show = false"
-      /> -->
-
+      <!-- Document viewing modal -->
       <ModalsFile
         v-if="documentModal.show"
         :fileObj="documentModal.blob"
         @close="documentModal.show = false"
       />
 
+      <!-- Success notification modal -->
       <ModalsSuccess
         v-if="successModal.show"
         :message="successModal.message"
@@ -131,6 +144,7 @@
       />
     </div>
     
+    <!-- Loading state -->
     <div v-else class="text-center py-8">
       <p class="text-gray-600">Loading project...</p>
     </div>
@@ -138,16 +152,19 @@
 </template>
 
 <script setup>
+// Get user company data and route information
 const { company } = useUser()
-
 const route = useRoute()
 const dbApi = useRuntimeConfig().public.dbApi
 
+// Reactive project data structure
 const project = ref({
   id: null,
   instance: null,
   docs: []
 })
+
+// Computed properties for document categorization
 const docsInput = computed(() => {
   return {
     toUpload: project.value.docs.filter(doc => doc.docType?.isInput === '1' && doc.isModified === '0'),
@@ -163,6 +180,7 @@ const docsOutput = computed(() => {
   }
 })
 
+// Modal state management
 const uploadModal = reactive({
   show: false,
   docId: null
@@ -177,7 +195,10 @@ const documentModal = reactive({
   blob: null
 })
 
-
+/**
+ * Opens a document for viewing by fetching it from MinIO
+ * Gets presigned URL and loads file as blob for display
+ */
 async function docOpen(docId) {
   if (!docId) {
     throw new Error('Document ID is required')
@@ -186,6 +207,7 @@ async function docOpen(docId) {
   const bucket = useRuntimeConfig().public.buckets.companyFiles;
   const path = `${company.value.id}/projects/${project.value.id}/${docId}`;
 
+  // Get presigned URL for file download
   const minioUrl = await fetch(`/api/minio-get?path=${encodeURIComponent(path)}&bucket=${bucket}`)
     .then(res => {
       if (!res.ok) {
@@ -194,6 +216,7 @@ async function docOpen(docId) {
       return res.json()
     })
 
+  // Download file as blob
   documentModal.blob = await fetch(minioUrl.url).then(res => {
     if (!res.ok) {
       throw new Error('Failed to download file')
@@ -201,11 +224,16 @@ async function docOpen(docId) {
     return res.blob()
   })
 
+  // Show document modal
   documentModal.show = true
   const doc = project.value.docs.find(doc => doc.id === docId)
   documentModal.fileName = doc.docType?.name || 'Unknown Document'
 }
 
+/**
+ * Uploads a document to MinIO and updates document status
+ * Uses presigned URL for direct upload and updates isModified flag
+ */
 async function docUpload(file) {
   if(!(file instanceof File)){
     return
@@ -214,6 +242,7 @@ async function docUpload(file) {
   const bucket = useRuntimeConfig().public.buckets.companyFiles;
   const path = `${company.value.id}/projects/${project.value.id}/${uploadModal.docId}`;
 
+  // Get presigned URL for file upload
   const minioUrl = await fetch(`/api/minio-put?path=${encodeURIComponent(path)}&bucket=${bucket}`)
     .then(res => {
       if (!res.ok) {
@@ -222,6 +251,7 @@ async function docUpload(file) {
       return res.json()
     })
 
+  // Upload file to MinIO
   const ok = await fetch(minioUrl.url, {
     method:'PUT',
     body: file
@@ -236,6 +266,7 @@ async function docUpload(file) {
     return false
   })
 
+  // Update document status to modified if upload successful
   const docIndex = project.value.docs.findIndex(doc => doc.id === uploadModal.docId)
   if(ok && docIndex !== -1 && project.value.docs[docIndex].isModified != '1'){
     await fetch(dbApi + '/data/projDocs/' + uploadModal.docId, {
@@ -259,13 +290,17 @@ async function docUpload(file) {
     })
   }
 
+  // Show success message if upload completed
   if(ok){
     successModal.show = true
     successModal.message = "Document uploaded successfully"
   }
 }
 
-//function for finishing or unfinishing a document
+/**
+ * Updates document finish status (finish or unfinish)
+ * Toggles isFinished flag between '0' and '1'
+ */
 async function finish(docId, isFinished = '1') {
   await fetch(dbApi + '/data/projDocs/' + docId, {
     method: 'PATCH',
@@ -281,6 +316,7 @@ async function finish(docId, isFinished = '1') {
     if (!res.ok) {
       throw new Error('Failed to update document')
     }
+    // Update local state
     const docIndex = project.value.docs.findIndex(doc => doc.id === docId)
     if(docIndex !== -1){
       project.value.docs[docIndex].isFinished = isFinished
@@ -290,13 +326,19 @@ async function finish(docId, isFinished = '1') {
   })
 }
 
+/**
+ * Placeholder for AI processing functionality
+ * TODO: Implement AI document processing
+ */
 async function aiProcess(docId) {
   console.log('AI Process' + docId)
 }
 
+// Initialize project data on component mount
 onMounted(() => {
   project.value.id = route.params.id
   
+  // Fetch project details with phase information
   fetch(dbApi + '/data/projects/' + project.value.id + '?include=phase_id')
     .then(res => {
       if (!res.ok) {
@@ -311,6 +353,7 @@ onMounted(() => {
       console.error('Failed to fetch project:', err)
     })
 
+  // Fetch project documents with document type information
   fetch(dbApi + '/data/projects/' + project.value.id + '/projDocs/?include=docTypes_id')
     .then(res => {
       if (!res.ok) {
@@ -319,6 +362,7 @@ onMounted(() => {
       return res.json()
     })
     .then(data => {
+      // Map documents with their document types
       project.value.docs = data.data.map(doc => {
         return {
           ...doc.attributes,

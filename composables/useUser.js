@@ -1,3 +1,10 @@
+//
+// composables/useUser.js
+// ---------------------
+// Provides global reactive state for authentication, user profile, and company info.
+// Used throughout the app for user/session management.
+// Exposes refs for auth, profile, and company objects.
+//
 const auth = ref({
   jwtToken: null,
   expireDate: null,
@@ -22,7 +29,7 @@ const company = ref({
   id: null
 })
 
-
+// Export composable function for use in components
 export default function() {
   return { auth, profile, company }
 }

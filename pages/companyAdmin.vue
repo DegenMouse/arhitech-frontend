@@ -1,10 +1,21 @@
+<!--
+  pages/companyAdmin.vue
+  ---------------------
+  Company administrator dashboard page that provides management tools for company operations.
+  Features team management, project creation/management, and company leave functionality.
+  Integrates multiple modal components for different admin tasks.
+  Handles data fetching for members and projects with error handling.
+  Provides a centralized interface for company administrators to manage their organization.
+-->
 <template>
+  <!-- Main admin dashboard container -->
   <div class="min-h-screen bg-gray-50 p-4">
     <div class="max-w-4xl mx-auto">
-      <!-- Header with company name and leave button -->
+      <!-- Header section with company name and leave option -->
       <div class="bg-white rounded-lg shadow-md p-6 mb-8">
         <div class="flex justify-between items-center">
           <h1 class="text-3xl font-bold text-gray-800">{{ company.companyName }}</h1>
+          <!-- Leave company button -->
           <button 
             @click="showLeaveModal = true"
             class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -14,11 +25,13 @@
         </div>
       </div>
       
-      <!-- Main content area -->
+      <!-- Main dashboard content area -->
       <div class="bg-white rounded-xl shadow-lg p-8">
         <h2 class="text-2xl font-semibold text-gray-800 mb-6">Admin Dashboard</h2>
         
+        <!-- Admin action buttons grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Team management button -->
           <button 
             @click="showMembersModal = true"
             class="p-6 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-center border border-gray-200"
@@ -26,6 +39,7 @@
             <div class="font-semibold text-lg">Manage Team</div>
           </button>
           
+          <!-- Project management button -->
           <button 
             @click="showManageProjectsModal = true"
             class="p-6 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-center border border-gray-200"
@@ -33,6 +47,7 @@
             <div class="font-semibold text-lg">Manage Projects</div>
           </button>
           
+          <!-- Create project button -->
           <button 
             @click="showCreateProjectModal = true"
             class="p-6 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-center border border-gray-200"
@@ -43,7 +58,7 @@
       </div>
     </div>
     
-    <!-- Confirm Leave Company Modal -->
+    <!-- Leave company confirmation modal -->
     <ModalsConfirm 
       v-if="showLeaveModal"
       title="Leave Company"
@@ -53,7 +68,7 @@
       @confirm="handleLeaveCompany"
     />
     
-    <!-- Members List Modal -->
+    <!-- Team members management modal -->
     <ModalsAdminManageMembers 
       v-if="showMembersModal"
       :members="members"
@@ -61,7 +76,7 @@
       @remove-member="handleRemoveMember"
     />
 
-    <!-- Create Project Modal -->
+    <!-- Project creation modal -->
     <ModalsAdminEditProject 
       v-if="showCreateProjectModal"
       :members="members"
@@ -70,7 +85,7 @@
       @create-project="handleCreateProject"
     />
 
-    <!-- Manage Projects Modal -->
+    <!-- Project management modal -->
     <ModalsAdminManageProjects 
       v-if="showManageProjectsModal"
       :projects="projects"
@@ -79,7 +94,7 @@
       @reFetchProjects="fetchProjects"
     />
     
-    <!-- Error Modal -->
+    <!-- Error display modal -->
     <ModalsError 
       v-if="error.show"
       :title="error.title"
@@ -90,37 +105,36 @@
 </template>
 
 <script setup>
+// Get runtime configuration and user data
 const dbApi = useRuntimeConfig().public.dbApi
 const { auth, company } = useUser()
 
-//modal for leaving company
-const showLeaveModal = ref(false)
+// Modal state management
+const showLeaveModal = ref(false) // Modal for leaving company
+const showMembersModal = ref(false) // Modal for managing members
+const members = ref([]) // Company members list
+const showCreateProjectModal = ref(false) // Modal for creating a project
+const showManageProjectsModal = ref(false) // Modal for managing projects
+const projects = ref([]) // Company projects list
 
-//modal for managing members
-const showMembersModal = ref(false)
-const members = ref([])
-
-//modal for creating a project
-const showCreateProjectModal = ref(false)
-
-//modal for managing projects
-const showManageProjectsModal = ref(false)
-const projects = ref([])
-
-//error modal data
+// Error modal state
 const error = reactive({
   show: false,
   title: '',
   message: ''
 })
 
-//fetch members and projects on mount
+// Initialize data on component mount
 onMounted(() => {
   fetchMembers().then(() => {
     fetchProjects()
   })
 })
 
+/**
+ * Handles leaving the company using the leaveCompany composable
+ * Navigates to noComp page on success
+ */
 const handleLeaveCompany = async () => {
 
   leaveCompany(error).then(() => {
@@ -130,7 +144,10 @@ const handleLeaveCompany = async () => {
     })
 }
 
-//fetch members that the company has
+/**
+ * Fetches all members of the company
+ * Retrieves user IDs from company relationship and fetches full user data
+ */
 const fetchMembers = async () => {
   return fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=users_in_company').then(res => {
     if(!res.ok){
@@ -138,8 +155,10 @@ const fetchMembers = async () => {
     }
     return res.json()
   }).then(async data => {
+    // Extract member IDs from the response
     const memberIds = data.includes.map(include => include.relationships.user_id.data.id);
 
+    // Fetch full user data for each member ID
     members.value = await Promise.all(memberIds.map(async memberId => {
       return await fetch(dbApi + '/data/users/' + memberId).then(res => {
         if(!res.ok){
@@ -158,7 +177,10 @@ const fetchMembers = async () => {
   })
 }
 
-//fetch projects for the company
+/**
+ * Fetches all projects for the company
+ * Includes user assignments for each project
+ */
 const fetchProjects = async () => {
 
   return fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=projects')
@@ -176,6 +198,7 @@ const fetchProjects = async () => {
       return
     }
     
+    // Fetch user assignments for each project in parallel
     const promises = []
       
     for (let i = 0; i < projs.length; i++) {
@@ -187,6 +210,7 @@ const fetchProjects = async () => {
           return response.json()
         })
         .then(data => {
+          // Map user IDs to full member objects
           projs[i].users_in_project = data.data.map(user => {
             const userId = user.relationships.user_id.data.id
             return members.value.find(member => member.id === userId) || { id: userId, attributes: { username: 'Unknown User' } }
@@ -199,6 +223,7 @@ const fetchProjects = async () => {
       promises.push(promise)
     }
     
+    // Wait for all user assignment fetches to complete
     await Promise.all(promises)
     
     projects.value = projs
@@ -211,7 +236,10 @@ const fetchProjects = async () => {
   })
 }
 
-// remove a member from the company
+/**
+ * Removes a member from the company
+ * Deletes the user-company relationship and updates local state
+ */
 const handleRemoveMember = (memberId) => {
 
   fetch(dbApi + '/data/users_in_company/' + memberId, {
@@ -224,6 +252,7 @@ const handleRemoveMember = (memberId) => {
       throw new Error('Failed to remove member')
     }
   }).then(() => {
+    // Remove member from local state
     const index = members.value.findIndex(member => member.id === memberId)
     if (index > -1) {
       members.value.splice(index, 1)
@@ -231,11 +260,14 @@ const handleRemoveMember = (memberId) => {
   })
 }
 
-//create a project
-//TODO: make dynamic so that it can be used for editing projects as well
-//TODO: the number of input fields should be dynamic 
-// based on the number of editable fields in the db
+/**
+ * Creates a new project and assigns users to it
+ * TODO: make dynamic so that it can be used for editing projects as well
+ * TODO: the number of input fields should be dynamic 
+ * based on the number of editable fields in the db
+ */
 const handleCreateProject = (project) => {
+  // Create the project first
   fetch(dbApi + '/data/projects', {
     method: 'POST',
     body: JSON.stringify({
@@ -255,6 +287,7 @@ const handleCreateProject = (project) => {
     return res.json()
   }).then(data => {
       const projectId = data.data.id
+      // Assign users to the project
       project.usersInProject.forEach(userId => {
         fetch(dbApi + '/data/users_in_project', {
           method: 'POST',
@@ -275,6 +308,7 @@ const handleCreateProject = (project) => {
         })
       })
     }).then(() => {
+      // Refresh projects list after creation
       fetchProjects()
     }).catch(err => {
       console.error('Failed to create project:', err)

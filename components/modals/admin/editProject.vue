@@ -1,9 +1,22 @@
+<!--
+  components/modals/admin/editProject.vue
+  --------------------------------------
+  Modal component for creating and editing projects in the admin interface.
+  Features form inputs for project name, deadline, and team member selection.
+  Supports both creation (isNew=true) and editing modes with validation.
+  Includes date validation to prevent past deadlines and required field checks.
+  Emits events for project creation/editing with form data.
+  Provides responsive design with scrollable content for mobile compatibility.
+-->
 <template>
+  <!-- Modal overlay with backdrop -->
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <!-- Modal content container -->
     <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-      <!-- Header -->
+      <!-- Modal header with title and close button -->
       <div class="flex justify-between items-center p-6 border-b border-gray-200">
         <h2 class="text-xl font-semibold text-gray-800">{{ isNew ? 'Create New Project' : 'Edit Project' }}</h2>
+        <!-- Close button with X icon -->
         <button 
           @click="$emit('close')"
           class="text-gray-400 hover:text-gray-600 transition-colors"
@@ -14,9 +27,9 @@
         </button>
       </div>
 
-      <!-- Form -->
+      <!-- Project form -->
       <form @submit.prevent="handleSubmit" class="p-6 space-y-6">
-        <!-- Project Name -->
+        <!-- Project name input field -->
         <div>
           <label for="projectName" class="block text-sm font-medium text-gray-700 mb-2">
             Project Name *
@@ -31,7 +44,7 @@
           />
         </div>
 
-        <!-- Deadline -->
+        <!-- Project deadline input field -->
         <div>
           <label for="deadline" class="block text-sm font-medium text-gray-700 mb-2">
             Deadline *
@@ -45,15 +58,18 @@
           />
         </div>
 
-        <!-- Users Selection -->
+        <!-- Team members selection with checkboxes -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Team Members
           </label>
+          <!-- Scrollable members list -->
           <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-300 rounded-md p-3">
+            <!-- Empty state for no members -->
             <div v-if="members.length === 0" class="text-sm text-gray-500 italic">
               No team members available
             </div>
+            <!-- Member checkbox list -->
             <div 
               v-else
               v-for="member in members" 
@@ -75,13 +91,14 @@
           </div>
         </div>
 
-        <!-- Error Message -->
+        <!-- Error message display -->
         <div v-if="error" class="text-red-600 text-sm">
           {{ error }}
         </div>
 
-        <!-- Action Buttons -->
+        <!-- Form action buttons -->
         <div class="flex justify-end space-x-3 pt-4">
+          <!-- Cancel button -->
           <button
             type="button"
             @click="$emit('close')"
@@ -89,6 +106,7 @@
           >
             Cancel
           </button>
+          <!-- Submit button with loading state -->
           <button
             type="submit"
             :disabled="isSubmitting"
@@ -103,6 +121,7 @@
 </template>
 
 <script setup>
+// Component props definition
 const props = defineProps({
   members: {
     type: Array,
@@ -122,28 +141,39 @@ const props = defineProps({
   }
 })
 
+// Component events
 const emit = defineEmits(['close', 'create-project', 'edit-project'])
 
+// Reactive form data initialized from props
 const formData = reactive({
   name: props.prevFormData.name,
   deadline: props.prevFormData.deadline,
   usersInProject: props.prevFormData.usersInProject
 })
 
+// Form validation state
 const error = ref('')
 // const isSubmitting = ref(false)
 
+/**
+ * Handles form submission with validation
+ * Validates required fields and date constraints
+ * Emits appropriate event based on isNew prop
+ */
 const handleSubmit = async () => {
     
+  // Validate project name
   if (!formData.name.trim()) {
     error.value = 'Project name is required'
     return
   }
 
+  // Validate deadline
   if (!formData.deadline) {
     error.value = 'Deadline is required'
     return
   }else{
+    // Check if deadline is in the past
     const selectedDate = new Date(formData.deadline);
     const currentDate = new Date();
     
@@ -153,20 +183,24 @@ const handleSubmit = async () => {
     }
   }
 
+  // Clear any previous errors
   error.value = ''
 
+  // Prepare submission object
   const submitObject = {
     name: formData.name.trim(),
     deadline: formData.deadline,
     usersInProject: [...formData.usersInProject]
   }
 
+  // Emit appropriate event based on mode
   if(props.isNew){
     emit('create-project', submitObject)
   }else{
     emit('edit-project', submitObject)
   }
 
+  // Close modal after submission
   emit('close')
 }
 </script>
