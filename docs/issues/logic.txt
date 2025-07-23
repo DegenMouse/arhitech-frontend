@@ -1,0 +1,2 @@
+add logic for deleting project
+make document editable in document Modal

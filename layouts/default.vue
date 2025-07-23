@@ -1,13 +1,9 @@
 <template>
-    <div class="flex">
-      <sidebar /> <!-- Your dashboard/sidebar -->
-      <div class="flex-1">
-        <NuxtPage />
-      </div>
+  <div class="flex h-screen">
+    <sidebar class="h-screen flex-shrink-0" />
+    <div class="flex-1 h-screen overflow-y-auto">
+      <NuxtPage />
     </div>
-  </template>
-  
-  <script setup>
-  import DashboardSidebar from '~/components/sidebar.vue'
-  </script>
+  </div>
+</template>
   
