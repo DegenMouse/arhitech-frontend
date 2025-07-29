@@ -126,14 +126,19 @@
       <ModalsUploadFile 
         v-if="uploadModal.show" 
         :singleFile="true" 
+        :docId="uploadModal.docId"
         @close="uploadModal.show = false" 
-        @upload="docUpload" />
+        @upload="docUpload" 
+      />
 
       <!-- Document viewing modal -->
       <ModalsFile
         v-if="documentModal.show"
-        :fileObj="documentModal.blob"
+        :isPdf="documentModal.isPdf"
+        :url="documentModal.url"
+        :docId="documentModal.docId"
         @close="documentModal.show = false"
+        @change="docUpload"
       />
 
       <!-- Success notification modal -->
@@ -191,8 +196,9 @@ const successModal = reactive({
 })
 const documentModal = reactive({
   show: false,
-  fileName: null,
-  blob: null
+  isPdf: true,
+  url: null,
+  docId: null
 })
 
 /**
@@ -216,31 +222,65 @@ async function docOpen(docId) {
       return res.json()
     })
 
+    console.log("minioUrl")
+    console.log(minioUrl)
+
+  documentModal.url = minioUrl.url
+  documentModal.docId = docId
   // Download file as blob
-  documentModal.blob = await fetch(minioUrl.url).then(res => {
-    if (!res.ok) {
-      throw new Error('Failed to download file')
-    }
-    return res.blob()
-  })
+  // documentModal.blob = await fetch(minioUrl.url).then(res => {
+  //   if (!res.ok) {
+  //     throw new Error('Failed to download file')
+  //   }
+  //   return res.blob()
+  // })
 
   // Show document modal
   documentModal.show = true
-  const doc = project.value.docs.find(doc => doc.id === docId)
-  documentModal.fileName = doc.docType?.name || 'Unknown Document'
+  // const doc = project.value.docs.find(doc => doc.id === docId)
+  // documentModal.fileName = doc.docType?.name || 'Unknown Document'
 }
 
 /**
  * Uploads a document to MinIO and updates document status
  * Uses presigned URL for direct upload and updates isModified flag
  */
-async function docUpload(file) {
+async function docUpload(file, docId) {
   if(!(file instanceof File)){
     return
   }
+  // Get file MIME type
+  const mimeType = file.type || 'application/octet-stream';
+  
+  // Convert DOCX, JPEG, or PNG files to PDF if needed
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      mimeType === 'image/jpeg' || 
+      mimeType === 'image/png') {
+
+    console.log("convert to pdf")
+    
+    const form = new FormData();
+    form.append('file', file);
+
+    const res = await fetch('/api/doc2pdf', {
+      method: 'POST', 
+      body: form
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to convert file to PDF');
+    }
+
+    // Convert response to File object
+    const pdfArrayBuffer = await res.arrayBuffer();
+    const pdfBlob = new Blob([pdfArrayBuffer], { type: 'application/pdf' });
+    file = new File([pdfBlob], file.name.replace(/\.[^.]+$/, '.pdf'), { type: 'application/pdf' });
+  }else if(mimeType !== 'application/pdf'){
+    throw new Error('Unsupported file type: ' + mimeType);
+  }
 
   const bucket = useRuntimeConfig().public.buckets.companyFiles;
-  const path = `${company.value.id}/projects/${project.value.id}/${uploadModal.docId}`;
+  const path = `${company.value.id}/projects/${project.value.id}/${docId}`;
 
   // Get presigned URL for file upload
   const minioUrl = await fetch(`/api/minio-put?path=${encodeURIComponent(path)}&bucket=${bucket}`)
@@ -267,13 +307,13 @@ async function docUpload(file) {
   })
 
   // Update document status to modified if upload successful
-  const docIndex = project.value.docs.findIndex(doc => doc.id === uploadModal.docId)
+  const docIndex = project.value.docs.findIndex(doc => doc.id === docId)
   if(ok && docIndex !== -1 && project.value.docs[docIndex].isModified != '1'){
-    await fetch(dbApi + '/data/projDocs/' + uploadModal.docId, {
+    await fetch(dbApi + '/data/projDocs/' + docId, {
       method: 'PATCH',
       body: JSON.stringify({
         data: {
-          id: uploadModal.docId,
+          id: docId,
           attributes: {
             isModified: "1"
           }

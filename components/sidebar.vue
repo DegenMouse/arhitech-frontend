@@ -33,6 +33,10 @@
         :class="{ 'bg-gray-100': $route.path === '/projects' }">
         Projects
       </NuxtLink>
+      <NuxtLink to="/test" class="block p-2 rounded hover:bg-gray-100 mt-1"
+        :class="{ 'bg-gray-100': $route.path === '/test' }">
+        Testing
+      </NuxtLink>
     </nav>
     
     <!-- User account section with collapsible menu -->
