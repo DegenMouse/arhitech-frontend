@@ -25,9 +25,9 @@
         class="border border-gray-200 rounded-lg p-4"
       >
         <!-- Project name with fallback -->
-        <h3 class="text-lg font-semibold">{{ project.attributes?.name || 'Unnamed Project' }}</h3>
+        <h3 class="text-lg font-semibold select-none">{{ project.attributes?.name || 'Unnamed Project' }}</h3>
         <!-- Project deadline with fallback -->
-        <p class="text-sm text-gray-600">Deadline: {{ project.attributes?.deadline || 'No deadline' }}</p>
+        <p class="text-sm text-gray-600 select-none">Deadline: {{ project.attributes?.deadline || 'No deadline' }}</p>
       </div>
     </div>
   </div>
