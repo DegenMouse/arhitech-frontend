@@ -12,8 +12,7 @@
     <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
       <!-- App branding and description -->
       <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-gray-800">Welcome to MyApp</h1>
-        <p class="text-gray-600 mt-2">Simple login page built with Nuxt 3</p>
+        <h1 class="text-4xl font-bold text-gray-800">Welcome to ArhiTech</h1>
       </div>
       
       <!-- Authentication form with toggle between login/signup -->
@@ -143,7 +142,7 @@ function handleLogin() {
         // Store JWT token and trigger auth re-evaluation
         localStorage.setItem('jwt', data.jwt)
         auth.value.reEvalRequired = true
-        navigateTo('/')
+        navigateTo('/companies')
       } 
     }).catch(error => {console.error(error)})
   }else{

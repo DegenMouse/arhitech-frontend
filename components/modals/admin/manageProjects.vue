@@ -91,6 +91,72 @@
                 </span>
               </div>
             </div>
+
+            <!-- Project clients section -->
+            <div class="mt-3">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-sm font-medium text-gray-700">Project Clients:</h4>
+                <button
+                  @click="toggleClientManagement(project.id)"
+                  class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition-colors"
+                >
+                  Manage Clients
+                </button>
+              </div>
+              <!-- Clients list with tags -->
+              <div class="flex flex-wrap gap-2">
+                <span 
+                  v-for="client in project.clients_in_project || []" 
+                  :key="client.id"
+                  class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full"
+                >
+                  {{ client.username || client.email || 'Unknown Client' }}
+                </span>
+                <!-- Empty state for no clients -->
+                <span v-if="!project.clients_in_project?.length" class="text-sm text-gray-500 italic">
+                  No clients assigned
+                </span>
+              </div>
+              
+              <!-- Client management form (shown when managing clients) -->
+              <div v-if="managingClientsFor === project.id" class="mt-3 p-3 border border-green-200 rounded-md bg-green-50">
+                <div class="flex space-x-2 mb-2">
+                  <input
+                    v-model="newClientIdForProject"
+                    type="text"
+                    placeholder="Enter client user ID"
+                    class="flex-1 px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
+                  />
+                  <button
+                    @click="addClientToProject(project.id)"
+                    class="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div v-if="project.clients_in_project?.length > 0" class="space-y-1">
+                  <div 
+                    v-for="client in project.clients_in_project" 
+                    :key="client.id"
+                    class="flex items-center justify-between text-xs"
+                  >
+                    <span>{{ client.username || client.email || 'Unknown Client' }}</span>
+                    <button
+                      @click="removeClientFromProject(project.id, client.id)"
+                      class="text-red-600 hover:text-red-800"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+                <button
+                  @click="managingClientsFor = null; newClientIdForProject = ''"
+                  class="mt-2 text-xs text-gray-600 hover:text-gray-800"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -127,6 +193,10 @@ const dbApi = useRuntimeConfig().public.dbApi
 
 // Modal state for edit project modal
 const showEditProjectModal = ref(false)
+
+// Client management state
+const managingClientsFor = ref(null)
+const newClientIdForProject = ref('')
 
 // Variables to store edit state
 var prevData = {
@@ -165,6 +235,77 @@ const deleteProject = (projectId) => {
         throw new Error('Failed to delete project')
       }
     })
+  }
+}
+
+/**
+ * Toggle client management for a specific project
+ * @param {string} projectId - The ID of the project
+ */
+const toggleClientManagement = (projectId) => {
+  if (managingClientsFor.value === projectId) {
+    managingClientsFor.value = null
+    newClientIdForProject.value = ''
+  } else {
+    managingClientsFor.value = projectId
+    newClientIdForProject.value = ''
+  }
+}
+
+/**
+ * Add a client to a project by user ID
+ * @param {string} projectId - The ID of the project
+ */
+const addClientToProject = async (projectId) => {
+  if (!newClientIdForProject.value.trim()) return
+  
+  try {
+    const res = await fetch(dbApi + '/data/clients_in_project', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        data: { 
+          attributes: { 
+            project_id: projectId, 
+            user_id: newClientIdForProject.value.trim() 
+          } 
+        }
+      })
+    })
+    
+    if (!res.ok) {
+      throw new Error('Failed to add client to project')
+    }
+    
+    newClientIdForProject.value = ''
+    emit('fetchProjects') // Refresh projects to show updated client list
+  } catch (err) {
+    console.error('Failed to add client:', err)
+    alert('Failed to add client to project')
+  }
+}
+
+/**
+ * Remove a client from a project
+ * @param {string} projectId - The ID of the project
+ * @param {string} clientId - The ID of the client to remove
+ */
+const removeClientFromProject = async (projectId, clientId) => {
+  try {
+    const res = await fetch(dbApi + '/data/clients_in_project/?filter=project_id=' + projectId + ',user_id=' + clientId, {
+      method: 'DELETE'
+    })
+    
+    if (!res.ok) {
+      throw new Error('Failed to remove client from project')
+    }
+    
+    emit('fetchProjects') // Refresh projects to show updated client list
+  } catch (err) {
+    console.error('Failed to remove client:', err)
+    alert('Failed to remove client from project')
   }
 }
 
