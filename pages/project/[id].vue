@@ -21,28 +21,51 @@
         </div>
       </div>
       
-      <!-- Input Documents Section -->
+      <!-- Documents Section - Table Layout -->
       <div class="bg-white rounded shadow p-4 mb-6">
-        <h2 class="text-base font-medium text-gray-700 mb-2">Input Documents</h2>
-        <!-- Input documents with status-based grouping -->
-        <template v-if="docsInput.toUpload.length || docsInput.inProgress.length || docsInput.finished.length">
-          <!-- To Upload documents -->
-          <div v-if="docsInput.toUpload.length" class="mb-2">
-            <div class="text-xs text-gray-500 mb-1">To Upload</div>
-            <div>
-              <div v-for="doc in docsInput.toUpload" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
+        <h2 class="text-base font-medium text-gray-700 mb-4">Project Documents</h2>
+        
+        <div class="grid gap-4" style="grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto auto auto;">
+          <!-- Headers -->
+          <h3 class="text-sm font-medium text-gray-700 mb-2 text-center">Input Documents</h3>
+          <h3 class="text-sm font-medium text-gray-700 mb-2 text-center">Output Documents</h3>
+          
+          <!-- Row 1: Missing -->
+          <div class="border border-gray-200 rounded p-3">
+            <div class="text-xs text-gray-500 mb-2 font-medium">Missing</div>
+            <div v-if="docsInput.missing.length">
+              <div v-for="doc in docsInput.missing" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
                 <span class="text-sm font-semibold text-gray-800">{{ doc.docType?.name || 'Unknown Document Type' }}</span>
                 <div class="flex justify-end">
                   <button @click="uploadModal.show = true; uploadModal.docId = doc.id;" class="w-24 px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs mr-1">Upload</button>
                 </div>
               </div>
             </div>
+            <div v-else class="text-center py-2 text-gray-400 text-xs">
+              <p>No documents</p>
+            </div>
           </div>
-          <!-- In Progress documents -->
-          <div v-if="docsInput.inProgress.length" class="mb-2">
-            <div class="text-xs text-gray-500 mb-1">In Progress</div>
-            <div>
-              <div v-for="doc in docsInput.inProgress" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
+
+          <div class="border border-gray-200 rounded p-3">
+            <div class="text-xs text-gray-500 mb-2 font-medium">Missing</div>
+            <div v-if="docsOutput.missing.length">
+              <div v-for="doc in docsOutput.missing" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
+                <span class="text-sm font-semibold text-gray-800">{{ doc.docType?.name || 'Unknown Document Type' }}</span>
+                <div class="flex justify-end">
+                  <button @click="docOpen(doc.id)" class="w-24 px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs mr-1">Open</button>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-2 text-gray-400 text-xs">
+              <p>No documents</p>
+            </div>
+          </div>
+
+          <!-- Row 2: Progress -->
+          <div class="border border-gray-200 rounded p-3">
+            <div class="text-xs text-gray-500 mb-2 font-medium">Progress</div>
+            <div v-if="docsInput.progress.length">
+              <div v-for="doc in docsInput.progress" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
                 <span class="text-sm font-semibold text-gray-800">{{ doc.docType?.name || 'Unknown Document Type' }}</span>
                 <div class="flex justify-end">
                   <button @click="docOpen(doc.id)" class="w-24 px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs mr-1">Open</button>
@@ -52,12 +75,31 @@
                 </div>
               </div>
             </div>
+            <div v-else class="text-center py-2 text-gray-400 text-xs">
+              <p>No documents</p>
+            </div>
           </div>
-          <!-- Finished documents -->
-          <div v-if="docsInput.finished.length">
-            <div class="text-xs text-gray-500 mb-1">Finished</div>
-            <div>
-              <div v-for="doc in docsInput.finished" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
+
+          <div class="border border-gray-200 rounded p-3">
+            <div class="text-xs text-gray-500 mb-2 font-medium">Progress</div>
+            <div v-if="docsOutput.progress.length">
+              <div v-for="doc in docsOutput.progress" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
+                <span class="text-sm font-semibold text-gray-800">{{ doc.docType?.name || 'Unknown Document Type' }}</span>
+                <div class="flex justify-end">
+                  <button @click="docOpen(doc.id)" class="w-24 px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs mr-1">Open</button>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-2 text-gray-400 text-xs">
+              <p>No documents</p>
+            </div>
+          </div>
+
+          <!-- Row 3: Filled -->
+          <div class="border border-gray-200 rounded p-3">
+            <div class="text-xs text-gray-500 mb-2 font-medium">Filled</div>
+            <div v-if="docsInput.filled.length">
+              <div v-for="doc in docsInput.filled" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
                 <span class="text-sm font-semibold text-gray-800">{{ doc.docType?.name || 'Unknown Document Type' }}</span>
                 <div class="flex justify-end">
                   <button @click="docOpen(doc.id)" class="w-24 px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs mr-1">Open</button>
@@ -66,47 +108,76 @@
                 </div>
               </div>
             </div>
+            <div v-else class="text-center py-2 text-gray-400 text-xs">
+              <p>No documents</p>
+            </div>
           </div>
-        </template>
-        <!-- Empty state for input documents -->
-        <div v-else class="text-center py-4 text-gray-400 text-sm">
-          <p>No input documents found for this project.</p>
-        </div>
-      </div>
 
-      <!-- Output Documents Section -->
-      <div class="bg-white rounded shadow p-4">
-        <h2 class="text-base font-medium text-gray-700 mb-2">Output Documents</h2>
-        <!-- Output documents with status-based grouping -->
-        <template v-if="docsOutput.toUpload.length || docsOutput.inProgress.length || docsOutput.finished.length">
-          <!-- To Upload documents -->
-          <div v-if="docsOutput.toUpload.length" class="mb-2">
-            <div class="text-xs text-gray-500 mb-1">To Upload</div>
-            <div>
-              <div v-for="doc in docsOutput.toUpload" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
+          <div class="border border-gray-200 rounded p-3">
+            <div class="text-xs text-gray-500 mb-2 font-medium">Filled</div>
+            <div v-if="docsOutput.filled.length">
+              <div v-for="doc in docsOutput.filled" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
                 <span class="text-sm font-semibold text-gray-800">{{ doc.docType?.name || 'Unknown Document Type' }}</span>
                 <div class="flex justify-end">
                   <button @click="docOpen(doc.id)" class="w-24 px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs mr-1">Open</button>
                 </div>
               </div>
             </div>
+            <div v-else class="text-center py-2 text-gray-400 text-xs">
+              <p>No documents</p>
+            </div>
           </div>
-          <!-- In Progress documents -->
-          <div v-if="docsOutput.inProgress.length" class="mb-2">
-            <div class="text-xs text-gray-500 mb-1">In Progress</div>
-            <div>
-              <div v-for="doc in docsOutput.inProgress" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
+
+          <!-- Row 4: Pending -->
+          <div class="border border-gray-200 rounded p-3">
+            <div class="text-xs text-gray-500 mb-2 font-medium">Pending</div>
+            <div v-if="docsInput.pending.length">
+              <div v-for="doc in docsInput.pending" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
                 <span class="text-sm font-semibold text-gray-800">{{ doc.docType?.name || 'Unknown Document Type' }}</span>
                 <div class="flex justify-end">
                   <button @click="docOpen(doc.id)" class="w-24 px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs mr-1">Open</button>
                 </div>
               </div>
             </div>
+            <div v-else class="text-center py-2 text-gray-400 text-xs">
+              <p>No documents</p>
+            </div>
           </div>
-          <!-- Finished documents -->
-          <div v-if="docsOutput.finished.length">
-            <div class="text-xs text-gray-500 mb-1">Finished</div>
-            <div>
+
+          <div class="border border-gray-200 rounded p-3">
+            <div class="text-xs text-gray-500 mb-2 font-medium">Pending</div>
+            <div v-if="docsOutput.pending.length">
+              <div v-for="doc in docsOutput.pending" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
+                <span class="text-sm font-semibold text-gray-800">{{ doc.docType?.name || 'Unknown Document Type' }}</span>
+                <div class="flex justify-end">
+                  <button @click="docOpen(doc.id)" class="w-24 px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs mr-1">Open</button>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-2 text-gray-400 text-xs">
+              <p>No documents</p>
+            </div>
+          </div>
+
+          <!-- Row 5: Finished -->
+          <div class="border border-gray-200 rounded p-3">
+            <div class="text-xs text-gray-500 mb-2 font-medium">Finished</div>
+            <div v-if="docsInput.finished.length">
+              <div v-for="doc in docsInput.finished" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
+                <span class="text-sm font-semibold text-gray-800">{{ doc.docType?.name || 'Unknown Document Type' }}</span>
+                <div class="flex justify-end">
+                  <button @click="docOpen(doc.id)" class="w-24 px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs mr-1">Open</button>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-2 text-gray-400 text-xs">
+              <p>No documents</p>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded p-3">
+            <div class="text-xs text-gray-500 mb-2 font-medium">Finished</div>
+            <div v-if="docsOutput.finished.length">
               <div v-for="doc in docsOutput.finished" :key="doc.id" class="bg-gray-50 border border-gray-200 rounded p-3 mb-2 flex items-center justify-between">
                 <span class="text-sm font-semibold text-gray-800">{{ doc.docType?.name || 'Unknown Document Type' }}</span>
                 <div class="flex justify-end">
@@ -114,11 +185,10 @@
                 </div>
               </div>
             </div>
+            <div v-else class="text-center py-2 text-gray-400 text-xs">
+              <p>No documents</p>
+            </div>
           </div>
-        </template>
-        <!-- Empty state for output documents -->
-        <div v-else class="text-center py-4 text-gray-400 text-sm">
-          <p>No output documents found for this project.</p>
         </div>
       </div>
 
@@ -126,21 +196,19 @@
       <ModalsUploadFile 
         v-if="uploadModal.show" 
         :singleFile="true" 
+        :docId="uploadModal.docId"
         @close="uploadModal.show = false" 
-        @upload="docUpload" />
+        @upload="docUpload" 
+      />
 
       <!-- Document viewing modal -->
       <ModalsFile
         v-if="documentModal.show"
-        :fileObj="documentModal.blob"
+        :isPdf="documentModal.isPdf"
+        :url="documentModal.url"
+        :docId="documentModal.docId"
         @close="documentModal.show = false"
-      />
-
-      <!-- Success notification modal -->
-      <ModalsSuccess
-        v-if="successModal.show"
-        :message="successModal.message"
-        @close="successModal.show = false"
+        @change="docUpload"
       />
     </div>
     
@@ -156,6 +224,7 @@
 const { company } = useUser()
 const route = useRoute()
 const dbApi = useRuntimeConfig().public.dbApi
+const { error, success } = useUI()
 
 // Reactive project data structure
 const project = ref({
@@ -167,16 +236,20 @@ const project = ref({
 // Computed properties for document categorization
 const docsInput = computed(() => {
   return {
-    toUpload: project.value.docs.filter(doc => doc.docType?.isInput === '1' && doc.isModified === '0'),
-    inProgress: project.value.docs.filter(doc => doc.docType?.isInput === '1' && doc.isModified === '1' && doc.isFinished === '0'),
-    finished: project.value.docs.filter(doc => doc.docType?.isInput === '1' && doc.isFinished === '1')
+    missing: project.value.docs.filter(doc => doc.docType?.isInput === '1' && doc.state === 'missing'),
+    progress: project.value.docs.filter(doc => doc.docType?.isInput === '1' && doc.state === 'progress'),
+    filled: project.value.docs.filter(doc => doc.docType?.isInput === '1' && doc.state === 'filled'),
+    pending: project.value.docs.filter(doc => doc.docType?.isInput === '1' && doc.state === 'pending'),
+    finished: project.value.docs.filter(doc => doc.docType?.isInput === '1' && doc.state === 'finished')
   }
 })
 const docsOutput = computed(() => {
   return {
-    toUpload: project.value.docs.filter(doc => doc.docType?.isInput !== '1' && doc.isModified === '0'),
-    inProgress: project.value.docs.filter(doc => doc.docType?.isInput !== '1' && doc.isModified === '1' && doc.isFinished === '0'),
-    finished: project.value.docs.filter(doc => doc.docType?.isInput !== '1' && doc.isFinished === '1')
+    missing: project.value.docs.filter(doc => doc.docType?.isInput !== '1' && doc.state === 'missing'),
+    progress: project.value.docs.filter(doc => doc.docType?.isInput !== '1' && doc.state === 'progress'),
+    filled: project.value.docs.filter(doc => doc.docType?.isInput !== '1' && doc.state === 'filled'),
+    pending: project.value.docs.filter(doc => doc.docType?.isInput !== '1' && doc.state === 'pending'),
+    finished: project.value.docs.filter(doc => doc.docType?.isInput !== '1' && doc.state === 'finished')
   }
 })
 
@@ -185,14 +258,11 @@ const uploadModal = reactive({
   show: false,
   docId: null
 })
-const successModal = reactive({
-  show: false,
-  message: null
-})
 const documentModal = reactive({
   show: false,
-  fileName: null,
-  blob: null
+  isPdf: true,
+  url: null,
+  docId: null
 })
 
 /**
@@ -216,31 +286,65 @@ async function docOpen(docId) {
       return res.json()
     })
 
+    console.log("minioUrl")
+    console.log(minioUrl)
+
+  documentModal.url = minioUrl.url
+  documentModal.docId = docId
   // Download file as blob
-  documentModal.blob = await fetch(minioUrl.url).then(res => {
-    if (!res.ok) {
-      throw new Error('Failed to download file')
-    }
-    return res.blob()
-  })
+  // documentModal.blob = await fetch(minioUrl.url).then(res => {
+  //   if (!res.ok) {
+  //     throw new Error('Failed to download file')
+  //   }
+  //   return res.blob()
+  // })
 
   // Show document modal
   documentModal.show = true
-  const doc = project.value.docs.find(doc => doc.id === docId)
-  documentModal.fileName = doc.docType?.name || 'Unknown Document'
+  // const doc = project.value.docs.find(doc => doc.id === docId)
+  // documentModal.fileName = doc.docType?.name || 'Unknown Document'
 }
 
 /**
  * Uploads a document to MinIO and updates document status
  * Uses presigned URL for direct upload and updates isModified flag
  */
-async function docUpload(file) {
+async function docUpload(file, docId) {
   if(!(file instanceof File)){
     return
   }
+  // Get file MIME type
+  const mimeType = file.type || 'application/octet-stream';
+  
+  // Convert DOCX, JPEG, or PNG files to PDF if needed
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      mimeType === 'image/jpeg' || 
+      mimeType === 'image/png') {
+
+    console.log("convert to pdf")
+    
+    const form = new FormData();
+    form.append('file', file);
+
+    const res = await fetch('/api/doc2pdf', {
+      method: 'POST', 
+      body: form
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to convert file to PDF');
+    }
+
+    // Convert response to File object
+    const pdfArrayBuffer = await res.arrayBuffer();
+    const pdfBlob = new Blob([pdfArrayBuffer], { type: 'application/pdf' });
+    file = new File([pdfBlob], file.name.replace(/\.[^.]+$/, '.pdf'), { type: 'application/pdf' });
+  }else if(mimeType !== 'application/pdf'){
+    throw new Error('Unsupported file type: ' + mimeType);
+  }
 
   const bucket = useRuntimeConfig().public.buckets.companyFiles;
-  const path = `${company.value.id}/projects/${project.value.id}/${uploadModal.docId}`;
+  const path = `${company.value.id}/projects/${project.value.id}/${docId}`;
 
   // Get presigned URL for file upload
   const minioUrl = await fetch(`/api/minio-put?path=${encodeURIComponent(path)}&bucket=${bucket}`)
@@ -267,13 +371,13 @@ async function docUpload(file) {
   })
 
   // Update document status to modified if upload successful
-  const docIndex = project.value.docs.findIndex(doc => doc.id === uploadModal.docId)
+  const docIndex = project.value.docs.findIndex(doc => doc.id === docId)
   if(ok && docIndex !== -1 && project.value.docs[docIndex].isModified != '1'){
-    await fetch(dbApi + '/data/projDocs/' + uploadModal.docId, {
+    await fetch(dbApi + '/data/projDocs/' + docId, {
       method: 'PATCH',
       body: JSON.stringify({
         data: {
-          id: uploadModal.docId,
+          id: docId,
           attributes: {
             isModified: "1"
           }
@@ -292,8 +396,8 @@ async function docUpload(file) {
 
   // Show success message if upload completed
   if(ok){
-    successModal.show = true
-    successModal.message = "Document uploaded successfully"
+    success.value.show = true
+    success.value.message = "Document uploaded successfully"
   }
 }
 
@@ -354,7 +458,7 @@ onMounted(() => {
     })
 
   // Fetch project documents with document type information
-  fetch(dbApi + '/data/projects/' + project.value.id + '/projDocs/?include=docTypes_id')
+  fetch(dbApi + '/data/projects/' + project.value.id + '/projDocs/?include=docType_id')
     .then(res => {
       if (!res.ok) {
         throw new Error('Failed to fetch project documents')
@@ -366,7 +470,7 @@ onMounted(() => {
       project.value.docs = data.data.map(doc => {
         return {
           ...doc.attributes,
-          docType: data.includes.find(include => include.id === doc.relationships.docTypes_id.data.id)?.attributes,
+          docType: data.includes.find(include => include.id === doc.relationships.docType_id.data.id)?.attributes,
         }
       })
     })

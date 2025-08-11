@@ -14,7 +14,7 @@
     <div class="bg-white rounded-xl shadow-xl p-8 max-w-md w-full mx-4" @click.stop>
       <!-- Modal header with error title and close button -->
       <div class="flex justify-between items-center mb-6">
-        <h3 class="text-2xl font-semibold text-red-600">{{title}}</h3>
+        <h3 class="text-2xl font-semibold text-red-600">{{displayTitle}}</h3>
         <!-- Close button with X icon -->
         <button @click="emit('close')" class="text-gray-500 hover:text-gray-700">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,4 +57,9 @@ const props = defineProps({
 
 // Component events
 const emit = defineEmits(['close'])
+
+// Computed property to handle null/empty title fallback
+const displayTitle = computed(() => {
+  return !props.title || props.title.trim() === '' ? 'An error occurred' : props.title
+})
 </script> 

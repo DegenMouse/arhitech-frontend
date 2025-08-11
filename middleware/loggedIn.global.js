@@ -10,8 +10,13 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   
   if (import.meta.server) return
 
-  console.log("loggedIn.global.js")
+  // console.log("loggedIn.global.js")
+  
+  if(to.path.startsWith('/dev')){
+    return
+  }
 
+  // Check if the user is logged in
   const { auth } = useUser()
   // Re-evaluate user data if required (e.g., after login)
   if(auth.value.reEvalRequired){
@@ -21,7 +26,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   
   // Not logged in users can only see: /login and /
   if(to.path != '/' && to.path != '/login' && !auth.value.isLoggedIn){
-    console.log("not logged in")
+    // console.log("not logged in")
     return abortNavigation()
   }
 })

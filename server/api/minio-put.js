@@ -14,6 +14,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Missing `path` parameter' })
   }
 
+  // Automatically add .pdf extension if not present
+  const filePath = path.endsWith('.pdf') ? path : `${path}.pdf`
+
   const config = useRuntimeConfig()
   const endpointUrl = new URL(config.public.minioEndpoint)
 
@@ -29,7 +32,7 @@ export default defineEventHandler(async (event) => {
   // Presign a PUT URL valid for 5 minutes (300s)
   const url = await minioClient.presignedPutObject(
     bucket || config.public.buckets.companyFiles,
-    path,
+    filePath,
     300
   )
   

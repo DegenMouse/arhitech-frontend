@@ -36,9 +36,9 @@
           </label>
           <input
             id="projectName"
-            v-model="formData.name"
+            v-model="project.name"
             type="text"
-            required
+            
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Enter project name"
           />
@@ -51,9 +51,9 @@
           </label>
           <input
             id="deadline"
-            v-model="formData.deadline"
+            v-model="project.deadline"
             type="date"
-            required
+            
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -78,13 +78,13 @@
             >
               <input
                 :id="'member-' + member.id"
-                v-model="formData.usersInProject"
+                v-model="project.usersInProject"
                 :value="member.id"
                 type="checkbox"
                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label :for="'member-' + member.id" class="text-sm text-gray-700">
-                {{ member.attributes?.username || member.attributes?.email || 'Unknown User' }}
+                {{ member.username || member.email || 'Unknown User' }}
               </label>
             </div>
             
@@ -131,7 +131,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  prevFormData: {
+  prevData: {
     type: Object,
     default: () => ({
       name: '',
@@ -141,15 +141,18 @@ const props = defineProps({
   }
 })
 
-// Component events
-const emit = defineEmits(['close', 'create-project', 'edit-project'])
+const dbApi = useRuntimeConfig().public.dbApi
+const { auth, company } = useUser()
+const {success} = useUI()
 
-// Reactive form data initialized from props
-const formData = reactive({
-  name: props.prevFormData.name,
-  deadline: props.prevFormData.deadline,
-  usersInProject: props.prevFormData.usersInProject
+const project = reactive({
+  ...props.prevData
 })
+
+
+
+// Component events
+const emit = defineEmits(['close', 'submit'])
 
 // Form validation state
 const error = ref('')
@@ -161,46 +164,83 @@ const error = ref('')
  * Emits appropriate event based on isNew prop
  */
 const handleSubmit = async () => {
-    
-  // Validate project name
-  if (!formData.name.trim()) {
-    error.value = 'Project name is required'
-    return
-  }
+  console.log("handleSubmit")
+  console.log(props.isNew)
 
-  // Validate deadline
-  if (!formData.deadline) {
-    error.value = 'Deadline is required'
+  const addUsers = asymDiff(project.usersInProject, props.prevData.usersInProject)
+  const rmvUsers = asymDiff(props.prevData.usersInProject, project.usersInProject)
+
+  // Check if deadline is in the past
+  if (new Date(project.deadline) < new Date()) {
+    error.value = 'Deadline cannot be in the past'
     return
-  }else{
-    // Check if deadline is in the past
-    const selectedDate = new Date(formData.deadline);
-    const currentDate = new Date();
-    
-    if (selectedDate < currentDate) {
-      error.value = 'Deadline cannot be in the past'
-      return
-    }
   }
 
   // Clear any previous errors
   error.value = ''
 
-  // Prepare submission object
-  const submitObject = {
-    name: formData.name.trim(),
-    deadline: formData.deadline,
-    usersInProject: [...formData.usersInProject]
+  project.name = project.name.trim()
+  const method = props.isNew ? 'POST' : 'PATCH'
+
+  try{
+    // Create the project first
+    const res = await fetch(dbApi + '/data/projects' + (props.isNew ? '' : '/' + project.id), {
+      method: method,
+      body: JSON.stringify({
+        data: {
+          ...(props.isNew ? {} : { id: project.id }),
+          attributes: {
+            ...(props.isNew ? {} : { id: project.id }),
+            name: project.name,
+            deadline: project.deadline,
+            company_id: company.value.id,
+            admin_id: auth.value.id
+          }
+        }
+      })
+    })
+    if(!res.ok){
+      throw new Error('Failed to edit/ add project')
+    }else{
+      console.log("project edited/ added")
+    }
+    const data = await res.json()
+
+    const projectId = data.data.id
+
+    // Assign users to the project
+    for (const userId of addUsers) {
+      const res = await fetch(dbApi + '/data/users_in_project', {
+        method: 'POST',
+        body: JSON.stringify({
+          data: { attributes: { project_id: projectId, user_id: userId } }
+        })
+      })
+      if (!res.ok) {
+        throw new Error('Failed to add user to project: ' + userId)
+      }
+    }
+
+    for (const userId of rmvUsers) {
+      const res = await fetch(dbApi + '/data/users_in_project/?filter=project_id=' + projectId + ',user_id=' + userId, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        throw new Error('Failed to remove user from project: ' + userId)
+      }
+    }
+
+    success.value.message = 'Project created successfully'
+    success.value.show = true
+
+    emit('close')
+    await fetchProjects()
+  }catch(err){
+    console.error('Failed to create project:', err)
+    error.value.message = 'Unable to create project. Please try again.'
+    error.value.show = true
   }
 
-  // Emit appropriate event based on mode
-  if(props.isNew){
-    emit('create-project', submitObject)
-  }else{
-    emit('edit-project', submitObject)
-  }
-
-  // Close modal after submission
-  emit('close')
+  // emit('close')
 }
 </script>

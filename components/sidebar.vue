@@ -26,7 +26,7 @@
       <!-- Companies link with active state -->
       <NuxtLink to="/companies" class="block p-2 rounded hover:bg-gray-100 mt-1"
         :class="{ 'bg-gray-100': $route.path === '/companies' }">
-        Companies
+        Company
       </NuxtLink>
       <!-- Projects link with active state -->
       <NuxtLink to="/projects" class="block p-2 rounded hover:bg-gray-100 mt-1"

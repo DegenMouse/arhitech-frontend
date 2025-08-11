@@ -52,14 +52,6 @@
       @submit="handleCreateCompany"
     />
 
-    <!-- Error display modal -->
-    <ModalsError 
-      v-if="error.show"
-      :title="error.title"
-      :message="error.message"
-      @close="error.show = false"
-    />
-
   </div>
 </template>
     
@@ -71,13 +63,7 @@ const { auth } = useUser()
 // Modal state management
 const showJoinModal = ref(false) // Modal for joining existing company
 const showCreateModal = ref(false) // Modal for creating new company
-
-// Error modal state
-const error = reactive({
-  show: false,
-  title: '',
-  message: ''
-})
+const { error, success } = useUI()
 
 /**
  * Handles joining an existing company using a company code
@@ -99,10 +85,10 @@ const handleJoinCompany = async (companyCode) => {
     })
   }).then(res => {
     if(!res.ok){
-      error.title = 'Failed to Join Company'
-      error.message = 'Invalid company code or server error'
-      error.show = true
-      throw new Error('Invalid company code or server error')
+      error.value.title = 'Failed to Join Company'
+      error.value.message = 'Invalid company code or server error'
+      error.value.show = true
+      throw new Error('Invalid company code or server error.value')
     }
     return res.json()
   }).then(() => {
@@ -110,16 +96,16 @@ const handleJoinCompany = async (companyCode) => {
     fetchCompany().then(() => {
       navigateTo('/companies')
     }).catch(err => {
-      console.error(err)
-      error.title = 'Error retrieving company'
-      error.message = "This error might resolve with a page reload"
-      error.show = true
+      console.error.value(err)
+      error.value.title = 'Error retrieving company'
+      error.value.message = "This error.value might resolve with a page reload"
+      error.value.show = true
     })
   }).catch(err => {
-    error.title = 'Error'
-    error.message = err.message
-    error.show = true
-    console.error(err)
+    error.value.title = 'Error'
+    error.value.message = err.message
+    error.value.show = true
+    console.error.value(err)
   })
 
   
@@ -148,26 +134,26 @@ const handleCreateCompany = async (companyData) => {
     })
   }).then(res => {
     if(!res.ok){
-      error.title = 'Failed to Create Company'
-      error.message = 'Invalid company data or server error'
-      error.show = true
-      throw new Error('Invalid company data or server error')
+      error.value.title = 'Failed to Create Company'
+      error.value.message = 'Invalid company data or server error.value'
+      error.value.show = true
+      throw new Error('Invalid company data or server error.value')
     }
   }).then(() => {
     // Fetch company data and navigate to company dashboard
     fetchCompany().then(() => {
       navigateTo('/companies')
     }).catch(err => {
-      console.error(err)
-      error.title = 'Error retrieving company'
-      error.message = "This error might resolve with a page reload"
-      error.show = true
+      console.error.value(err)
+      error.value.title = 'Error retrieving company'
+      error.value.message = "This error.value might resolve with a page reload"
+      error.value.show = true
     })
   }).catch(err => {
-    error.title = 'Error'
-    error.message = err.message
-    error.show = true
-    console.error(err)
+    error.value.title = 'Error'
+    error.value.message = err.message
+    error.value.show = true
+    console.error.value(err)
   })
   showCreateModal.value = false
 }

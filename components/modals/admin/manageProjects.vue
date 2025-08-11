@@ -48,10 +48,10 @@
             <div class="flex justify-between items-start mb-4">
               <div class="flex-1">
                 <h3 class="text-lg font-semibold text-gray-800">
-                  {{ project.attributes?.name || 'Unnamed Project' }}
+                  {{ project.name || 'Unnamed Project' }}
                 </h3>
                 <p class="text-sm text-gray-600 mt-1">
-                  Deadline: {{ project.attributes?.deadline || 'no date' }}
+                  Deadline: {{ project.deadline || 'no date' }}
                 </p>
               </div>
               <!-- Project action buttons -->
@@ -83,7 +83,7 @@
                   :key="member.id"
                   class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
                 >
-                  {{ member.attributes?.username || member.attributes?.email || 'Unknown User' }}
+                  {{ member.username || member.email || 'Unknown User' }}
                 </span>
                 <!-- Empty state for no members -->
                 <span v-if="!project.users_in_project?.length" class="text-sm text-gray-500 italic">
@@ -100,10 +100,9 @@
     <!-- Edit project modal -->
     <ModalsAdminEditProject
       v-if="showEditProjectModal"
-      :prevFormData="oldData"
+      :prevData="prevData"
       :members="members"
-      @close="showEditProjectModal = false"
-      @edit-project="handleEditProject"
+      @close="showEditProjectModal = false; emit('fetchProjects')"
     />
   </div>
 </template>
@@ -121,7 +120,7 @@ const props = defineProps({
   }
 })
 // Component events
-const emit = defineEmits(['close', 'reFetchProjects'])
+const emit = defineEmits(['close', 'fetchProjects', 'submit'])
 
 // Get runtime configuration for API
 const dbApi = useRuntimeConfig().public.dbApi
@@ -130,8 +129,7 @@ const dbApi = useRuntimeConfig().public.dbApi
 const showEditProjectModal = ref(false)
 
 // Variables to store edit state
-var editedProjectId = null
-var oldData = {
+var prevData = {
   name: '',
   deadline: '',
   usersInProject: []
@@ -144,105 +142,15 @@ var oldData = {
  */
 const editProjBtn = (project) => {
   // Set form data from current project
-  oldData.name = project.attributes?.name || ''
-  oldData.deadline = project.attributes?.deadline || ''
-  oldData.usersInProject = project.users_in_project?.map(member => member.id) || []
-  
-  // Store project ID for editing
-  editedProjectId = project.id
+  prevData.id = project.id
+  prevData.name = project.name || ''
+  prevData.deadline = project.deadline || ''
+  prevData.usersInProject = project.users_in_project?.map(member => member.id) || []
 
   // Show edit modal
   showEditProjectModal.value = true
 }
 
-/**
- * Handles project editing with comprehensive change detection
- * Updates project attributes and manages team member changes
- * @param {Object} newData - The updated project data
- */
-const handleEditProject = async (newData) => {
-  console.log("project was edited...processing")
-  console.log(newData)
-  let hasChanges = false;
-  
-  // Check for changes in project attributes (excluding users)
-  for (const key in oldData) {
-    if (key === 'usersInProject') continue;
-
-    if (oldData[key] !== newData[key]) {
-      hasChanges = true;
-      break;
-    }
-  }
-
-  console.log("hasChanges", hasChanges)
-  console.log("projectId", editedProjectId)
-
-  // Update project attributes if changes detected
-  if(hasChanges){
-    await fetch(dbApi + '/data/projects/' + editedProjectId, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        data: {
-          id: editedProjectId,
-          attributes: {
-            name: newData.name,
-            deadline: newData.deadline
-          }
-        }
-      })
-    })
-    .then(res => {
-      if(!res.ok){
-        throw new Error('Failed to edit project')
-      }
-    })
-  }
-
-  // Handle team member changes - Add new users to project
-  for (const userId of newData.usersInProject) {
-    if (!oldData.usersInProject.includes(userId)) {
-      fetch(dbApi + '/data/users_in_project', {
-        method: 'POST',
-        body: JSON.stringify({
-          data: {
-            attributes: {
-              id: "",
-              project_id: editedProjectId,
-              user_id: userId
-            }
-          }
-        })
-      }).then(res => {
-        if (!res.ok) {
-          throw new Error('Failed to add user to project')
-        }
-      }).catch(err => {
-        console.error('Failed to add user to project:', err)
-      })
-    }
-  }
-
-  // Handle team member changes - Remove users from project
-  for (const userId of oldData.usersInProject) {
-    if (!newData.usersInProject.includes(userId)) {
-      fetch(dbApi + '/data/users_in_project/?filter=project_id=' + editedProjectId + ',user_id=' + userId, {
-        method: 'DELETE'
-      }).then(res => {
-        if (!res.ok) {
-          throw new Error('Failed to remove user from project')
-        }
-      }).catch(err => {
-        console.error('Failed to remove user from project:', err)
-      })
-    }
-  }
-
-  // Emit refetch event after all operations are complete
-  emit('reFetchProjects')
-
-  console.log("Changes detected:", hasChanges);
-}
 
 /**
  * Deletes a project after user confirmation

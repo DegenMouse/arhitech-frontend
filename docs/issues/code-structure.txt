@@ -1,2 +1,0 @@
-make composables type safe
-routing for company (noComp, Admin, Member) folder inside /pages

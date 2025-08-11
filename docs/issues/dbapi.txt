@@ -1,7 +1,0 @@
-in DBAPI make all tables not require id
-
-
-
-ACCES-CONTROL:
-    everybody can see user data -> maybe create a VIEW so that only certain data is visible
-    everybody can create a Project and add/rmv users to project

@@ -61,6 +61,10 @@ const props = defineProps({
   fileName: {
     type: String,
     default: 'document'
+  },
+  docId: {
+    type: String,
+    default: null
   }
 })
 
@@ -88,10 +92,10 @@ function onFileChange(e) {
 function handleUpload() {
   if(props.singleFile){
     // Emit single file for single file mode
-    emit('upload', files.value[0])
+    emit('upload', files.value[0], props.docId)
   }else{
     // Emit array of files for multiple file mode
-    emit('upload', files.value)
+    emit('upload', files.value, props.docId)
   }
   emit('close')
 }
