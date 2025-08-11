@@ -12,7 +12,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   // console.log("loggedIn.global.js")
   
-  if(to.path == '/test'){
+  if(to.path.startsWith('/dev')){
     return
   }
 

@@ -17,7 +17,7 @@
           <h1 class="text-3xl font-bold text-gray-800">{{ company.companyName }}</h1>
           <!-- Leave company button -->
           <button 
-            @click="showLeaveModal = true"
+            @click="handleLeaveCompany"
             class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             Leave Company
@@ -58,16 +58,6 @@
       </div>
     </div>
     
-    <!-- Leave company confirmation modal -->
-    <ModalsConfirm 
-      v-if="showLeaveModal"
-      title="Leave Company"
-      message="Are you sure you want to leave this company? This will result in the deletion of your company if you are it's founder. This is a BUG and needs to be fixed."
-      confirm-text="Leave Company"
-      @close="showLeaveModal = false"
-      @confirm="handleLeaveCompany"
-    />
-    
     <!-- Team members management modal -->
     <ModalsAdminManageMembers 
       v-if="showMembersModal"
@@ -81,8 +71,7 @@
       v-if="showCreateProjectModal"
       :members="members"
       :isNew="true"
-      @close="showCreateProjectModal = false"
-      @create-project="handleCreateProject"
+      @close="showCreateProjectModal = false; fetchProjects()"
     />
 
     <!-- Project management modal -->
@@ -91,15 +80,7 @@
       :projects="projects"
       :members="members"
       @close="showManageProjectsModal = false"
-      @reFetchProjects="fetchProjects"
-    />
-    
-    <!-- Error display modal -->
-    <ModalsError 
-      v-if="error.show"
-      :title="error.title"
-      :message="error.message"
-      @close="error.show = false"
+      @fetchProjects="fetchProjects"
     />
   </div>
 </template>
@@ -108,27 +89,28 @@
 // Get runtime configuration and user data
 const dbApi = useRuntimeConfig().public.dbApi
 const { auth, company } = useUser()
+const { confirm } = useConfirm()
+const { error, success } = useUI()
 
 // Modal state management
-const showLeaveModal = ref(false) // Modal for leaving company
 const showMembersModal = ref(false) // Modal for managing members
 const members = ref([]) // Company members list
 const showCreateProjectModal = ref(false) // Modal for creating a project
 const showManageProjectsModal = ref(false) // Modal for managing projects
 const projects = ref([]) // Company projects list
 
-// Error modal state
-const error = reactive({
-  show: false,
-  title: '',
-  message: ''
-})
+
 
 // Initialize data on component mount
-onMounted(() => {
-  fetchMembers().then(() => {
-    fetchProjects()
-  })
+onMounted(async () => {
+  try{
+    await fetchMembers()
+    await fetchProjects()
+  }catch(err){
+    console.error('Failed to fetch members or projects:', err)
+    error.value.message = 'Unable to load members AND/OR projects. Please check your internet connection and try again.'
+    error.value.show = true
+  }
 })
 
 /**
@@ -137,11 +119,17 @@ onMounted(() => {
  */
 const handleLeaveCompany = async () => {
 
-  leaveCompany(error).then(() => {
-      navigateTo('/noComp')
-    }).catch(err => {
-      console.error('Failed to leave company:', err)
-    })
+  const ok = await confirm("Are you sure you want to leave this company? This will result in the deletion of your company if you are it's founder. This is a BUG and needs to be fixed.")
+  if(!ok) return
+
+  try{
+    await leaveCompany()
+    navigateTo('/noComp')
+  }catch(err){
+    console.error('Failed to leave company:', err)
+    error.value.message = 'Unable to leave company. Please check your internet connection and try again.'
+    error.value.show = true
+  }
 }
 
 /**
@@ -149,170 +137,102 @@ const handleLeaveCompany = async () => {
  * Retrieves user IDs from company relationship and fetches full user data
  */
 const fetchMembers = async () => {
-  return fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=users_in_company').then(res => {
-    if(!res.ok){
-      throw new Error('Failed to fetch users in company')
-    }
-    return res.json()
-  }).then(async data => {
-    // Extract member IDs from the response
-    const memberIds = data.includes.map(include => include.relationships.user_id.data.id);
+  console.log("fetching members")
+  const res = await fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=users_in_company')
+  if(!res.ok){
+      throw new Error('Failed to fetch users in company, status: ' + res.status)
+  }
+  const data = await res.json()
 
-    // Fetch full user data for each member ID
-    members.value = await Promise.all(memberIds.map(async memberId => {
-      return await fetch(dbApi + '/data/users/' + memberId).then(res => {
-        if(!res.ok){
-          throw new Error('Failed to fetch user')
-        }
-        return res.json();
-      }).then(data => {
-        return data.data;
-      })
-    }));
-  }).catch(err => {
-    console.error('Failed to fetch members:', err)
-    error.title = 'Failed to Load Members'
-    error.message = 'Unable to load team members. Please try again.'
-    error.show = true
-  })
+  // Extract member IDs from the response
+  const memberIds = data.includes.map(include => include.relationships.user_id.data.id);
+
+  // Fetch full user data for each member ID
+  members.value = await Promise.all(
+    memberIds.map(async memberId => {
+      const res = await fetch(dbApi + '/data/users/' + memberId)
+      if(!res.ok){
+        throw new Error('Failed to fetch user, status: ' + res.status)
+      }
+      const data = await res.json()
+      return { ...data.data.attributes };
+  }));
 }
 
 /**
  * Fetches all projects for the company
  * Includes user assignments for each project
  */
-const fetchProjects = async () => {
+const fetchProjects = async (projectId = null) => {
+  console.log("fetching projects")
 
-  return fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=projects')
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Failed to fetch projects')
-    }
-    return response.json()
-  })
-  .then(async data => {
-    const projs = data.includes || null
-    if(!projs){
-      console.log("no projects")
-      projects.value = []
-      return
-    }
+  const res = await fetch(dbApi + '/data/admins/' + auth.value.id + '/company_id/?include=projects')
+  if (!res.ok) {
+    throw new Error('Failed to fetch projects')
+  }
     
-    // Fetch user assignments for each project in parallel
-    const promises = []
-      
-    for (let i = 0; i < projs.length; i++) {
-      const promise = fetch(dbApi + '/data/users_in_project/?filter=project_id=' + projs[i].id)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Failed to fetch users in project')
-          }
-          return response.json()
+  const data = await res.json()
+
+  const projs = data.includes || null
+  if(!projs){
+    console.log("no projects")
+    projects.value = []
+    return
+  }
+
+
+  // I want that the projects object also contains the users_in_project but those I have to get separetely
+  projects.value = await Promise.all(
+    // retrieve members for each project
+    projs.map(async (project) => {
+      // only the userIds are retrieved from here
+      const res = await fetch(dbApi + '/data/users_in_project/?filter=project_id=' + project.id)
+      if (!res.ok) {
+        throw new Error('Failed to fetch users in project')
+      }
+      const json = await res.json()
+
+      return{
+        ...project.attributes,
+        // the whole user object is retrieved from the existing membersArray
+        users_in_project: json.data.map(({ relationships }) => {
+          const userId = relationships.user_id.data.id
+          return (
+            members.value.find(m => m.id === userId) || 
+            { id: userId, attributes: { username: 'Unknown User' } }
+          )
         })
-        .then(data => {
-          // Map user IDs to full member objects
-          projs[i].users_in_project = data.data.map(user => {
-            const userId = user.relationships.user_id.data.id
-            return members.value.find(member => member.id === userId) || { id: userId, attributes: { username: 'Unknown User' } }
-          })
-        })
-        .catch(err => {
-          console.error('Failed to fetch users in project:', err)
-        })
-      
-      promises.push(promise)
+      }
     }
-    
-    // Wait for all user assignment fetches to complete
-    await Promise.all(promises)
-    
-    projects.value = projs
-  })
-  .catch(err => {
-    console.error('Failed to fetch projects:', err)
-    error.title = 'Failed to Load Projects'
-    error.message = 'Unable to load projects. Please try again.'
-    error.show = true
-  })
+  ))
+  console.log("projects.value")
+  console.log(projects.value)
 }
 
 /**
  * Removes a member from the company
  * Deletes the user-company relationship and updates local state
  */
-const handleRemoveMember = (memberId) => {
-
-  fetch(dbApi + '/data/users_in_company/' + memberId, {
-    method: 'DELETE'
-  }).then(res => {
+const handleRemoveMember = async (memberId) => {
+  try{
+    const res = await fetch(dbApi + '/data/users_in_company/' + memberId, {
+      method: 'DELETE'
+    })
     if(!res.ok){
-      error.title = 'Failed to Remove Member'
-      error.message = 'Unable to remove member. Please try again.'
-      error.show = true
       throw new Error('Failed to remove member')
     }
-  }).then(() => {
-    // Remove member from local state
+
     const index = members.value.findIndex(member => member.id === memberId)
     if (index > -1) {
       members.value.splice(index, 1)
     }
-  })
+    success.value.message = 'Member removed successfully'
+    success.value.show = true
+  }catch(err){
+    console.error('Failed to remove member:', err)
+    error.value.message = 'Unable to remove member. Please try again.'
+    error.value.show = true
+  }
 }
 
-/**
- * Creates a new project and assigns users to it
- * TODO: make dynamic so that it can be used for editing projects as well
- * TODO: the number of input fields should be dynamic 
- * based on the number of editable fields in the db
- */
-const handleCreateProject = (project) => {
-  // Create the project first
-  fetch(dbApi + '/data/projects', {
-    method: 'POST',
-    body: JSON.stringify({
-      data: {
-        attributes: {
-          name: project.name,
-          deadline: project.deadline,
-          company_id: company.value.id,
-          admin_id: auth.value.id
-        }
-      }
-    })
-  }).then(res => {
-    if(!res.ok){
-      throw new Error('Failed to create project')
-    }
-    return res.json()
-  }).then(data => {
-      const projectId = data.data.id
-      // Assign users to the project
-      project.usersInProject.forEach(userId => {
-        fetch(dbApi + '/data/users_in_project', {
-          method: 'POST',
-          body: JSON.stringify({
-            data: {
-              attributes: {
-                project_id: projectId,
-                user_id: userId
-              }
-            }
-          })
-        }).then(res => {
-          if(!res.ok){
-            throw new Error('Failed to add user to project')
-          }
-        }).catch(err => {
-          console.error('Failed to add user to project:', err)
-        })
-      })
-    }).then(() => {
-      // Refresh projects list after creation
-      fetchProjects()
-    }).catch(err => {
-      console.error('Failed to create project:', err)
-    })
-  
-}
 </script>

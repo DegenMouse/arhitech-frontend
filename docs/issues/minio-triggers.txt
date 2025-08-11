@@ -1,8 +1,0 @@
-when creating a new project a copy of the docTypes that have a tpl
-    should be created inside /projectId/docId
-when deleting a company,project,projDoc the foled/file should be also deleted in minio
-when creating a new company,project the accordin folders should be created
-when a user signs up a minio account should be created aswell
-when a user joins a company,project minio account should be added to according group
-
-minio user groups for: projects AND? company
