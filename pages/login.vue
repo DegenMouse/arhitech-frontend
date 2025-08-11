@@ -142,7 +142,7 @@ function handleLogin() {
         // Store JWT token and trigger auth re-evaluation
         localStorage.setItem('jwt', data.jwt)
         auth.value.reEvalRequired = true
-        navigateTo('/')
+        navigateTo('/companies')
       } 
     }).catch(error => {console.error(error)})
   }else{

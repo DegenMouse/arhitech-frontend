@@ -19,8 +19,8 @@
     <!-- Main navigation menu -->
     <nav class="flex-1 p-4">
       <!-- Dashboard link with active state -->
-      <NuxtLink to="/" class="block p-2 rounded hover:bg-gray-100" 
-        :class="{ 'bg-gray-100': $route.path === '/' }">
+      <NuxtLink to="/dashboard" class="block p-2 rounded hover:bg-gray-100" 
+        :class="{ 'bg-gray-100': $route.path === '/dashboard' }">
         Dashboard
       </NuxtLink>
       <!-- Companies link with active state -->

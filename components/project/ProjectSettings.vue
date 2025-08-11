@@ -158,6 +158,93 @@
         </div>
       </div>
 
+      <!-- Project Clients Card -->
+      <div class="border border-gray-200 rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-medium text-gray-900">Project Clients</h3>
+          <button
+            @click="toggleClientEdit"
+            class="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            {{ isEditingClients ? 'Done' : 'Manage' }}
+          </button>
+        </div>
+        
+        <!-- Clients Display -->
+        <div v-if="!isEditingClients">
+          <div v-if="projectClients.length > 0" class="flex flex-wrap gap-2">
+            <div 
+              v-for="client in projectClients" 
+              :key="client.id"
+              class="flex items-center space-x-2 bg-green-50 text-green-800 px-3 py-2 rounded-full text-sm"
+            >
+              <div class="w-6 h-6 bg-green-200 rounded-full flex items-center justify-center text-xs font-medium">
+                {{ (client.username || client.email || 'C').charAt(0).toUpperCase() }}
+              </div>
+              <span>{{ client.username || client.email || 'Unknown Client' }}</span>
+            </div>
+          </div>
+          <p v-else class="text-gray-500 text-sm italic">No clients assigned to this project</p>
+        </div>
+        
+        <!-- Clients Edit Mode -->
+        <div v-else class="space-y-4">
+          <!-- Add Client by ID -->
+          <div class="border border-gray-200 rounded-md p-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Add Client by ID</label>
+            <div class="flex space-x-2">
+              <input
+                v-model="newClientId"
+                type="text"
+                placeholder="Enter client user ID"
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                @click="addClientById"
+                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+              >
+                Add Client
+              </button>
+            </div>
+          </div>
+          
+          <!-- Current Clients List -->
+          <div v-if="projectClients.length > 0" class="border border-gray-200 rounded-md p-4">
+            <h4 class="text-sm font-medium text-gray-700 mb-2">Current Clients</h4>
+            <div class="space-y-2">
+              <div 
+                v-for="client in projectClients" 
+                :key="client.id"
+                class="flex items-center justify-between p-2 bg-gray-50 rounded"
+              >
+                <div class="flex items-center space-x-2">
+                  <div class="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center text-sm font-medium text-green-600">
+                    {{ (client.username || client.email || 'C').charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">{{ client.username || 'No username' }}</p>
+                    <p class="text-xs text-gray-500">{{ client.email || 'No email' }}</p>
+                  </div>
+                </div>
+                <button
+                  @click="removeClient(client.id)"
+                  class="text-red-600 hover:text-red-800 text-sm"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <button
+            @click="isEditingClients = false"
+            class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+          >
+            Done Managing Clients
+          </button>
+        </div>
+      </div>
+
       <!-- Danger Zone -->
       <div class="border border-red-200 rounded-lg p-6 bg-red-50">
         <h3 class="text-lg font-medium text-red-900 mb-2">Danger Zone</h3>
@@ -192,17 +279,22 @@ const { success, error } = useUI()
 
 // Check if current user is admin
 const isAdmin = computed(() => {
-  return company.value?.role === 'admin'
+  return company.value?.isAdmin === true
 })
 
 // Edit mode states
 const isEditingBasic = ref(false)
 const isEditingMembers = ref(false)
+const isEditingClients = ref(false)
 
 // Reactive data for project members and all company members
 const projectMembers = ref([])
 const allCompanyMembers = ref([])
 const selectedMembers = ref([])
+
+// Reactive data for project clients
+const projectClients = ref([])
+const newClientId = ref('')
 
 // Edit form data
 const editForm = reactive({
@@ -283,6 +375,44 @@ watch(() => props.project.instance?.id, (newId) => {
 watch(() => company.value?.id, (newId) => {
   if (newId) {
     fetchCompanyMembers()
+  }
+}, { immediate: true })
+
+/**
+ * Fetch project clients
+ */
+const fetchProjectClients = () => {
+  if (!props.project.instance?.id) return
+  
+  fetch(dbApi + '/data/projects/' + props.project.instance.id + '/clients_in_project/?include=user_id')
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('Failed to fetch project clients')
+      }
+      return res.json()
+    })
+    .then(data => {
+      // Map clients with their user data
+      projectClients.value = data.data.map(clientInProject => {
+        const userData = data.includes?.find(include => 
+          include.id === clientInProject.relationships?.user_id?.data?.id
+        )
+        return {
+          id: userData?.id,
+          username: userData?.attributes?.username,
+          email: userData?.attributes?.email
+        }
+      }).filter(client => client.id) // Filter out any invalid clients
+    })
+    .catch(err => {
+      console.error('Failed to fetch project clients:', err)
+    })
+}
+
+// Watch for project changes and fetch clients
+watch(() => props.project.instance?.id, (newId) => {
+  if (newId) {
+    fetchProjectClients()
   }
 }, { immediate: true })
 
@@ -425,6 +555,79 @@ const saveMemberChanges = async () => {
     console.error('Failed to update team members:', err)
     error.value.show = true
     error.value.message = 'Failed to update team members'
+  }
+}
+
+/**
+ * Toggle client edit mode
+ */
+const toggleClientEdit = () => {
+  if (!isAdmin.value) return
+  isEditingClients.value = !isEditingClients.value
+  if (!isEditingClients.value) {
+    newClientId.value = ''
+  }
+}
+
+/**
+ * Add a client by their user ID
+ */
+const addClientById = async () => {
+  if (!isAdmin.value || !props.project.instance?.id || !newClientId.value.trim()) return
+  
+  try {
+    const res = await fetch(dbApi + '/data/clients_in_project', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        data: { 
+          attributes: { 
+            project_id: props.project.instance.id, 
+            user_id: newClientId.value.trim() 
+          } 
+        }
+      })
+    })
+    
+    if (!res.ok) {
+      throw new Error('Failed to add client to project')
+    }
+    
+    success.value.show = true
+    success.value.message = 'Client added successfully'
+    newClientId.value = ''
+    fetchProjectClients() // Refresh client list
+  } catch (err) {
+    console.error('Failed to add client:', err)
+    error.value.show = true
+    error.value.message = 'Failed to add client to project'
+  }
+}
+
+/**
+ * Remove a client from the project
+ */
+const removeClient = async (clientId) => {
+  if (!isAdmin.value || !props.project.instance?.id) return
+  
+  try {
+    const res = await fetch(dbApi + '/data/clients_in_project/?filter=project_id=' + props.project.instance.id + ',user_id=' + clientId, {
+      method: 'DELETE'
+    })
+    
+    if (!res.ok) {
+      throw new Error('Failed to remove client from project')
+    }
+    
+    success.value.show = true
+    success.value.message = 'Client removed successfully'
+    fetchProjectClients() // Refresh client list
+  } catch (err) {
+    console.error('Failed to remove client:', err)
+    error.value.show = true
+    error.value.message = 'Failed to remove client from project'
   }
 }
 
