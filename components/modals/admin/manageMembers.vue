@@ -42,15 +42,15 @@
             <div class="flex items-center space-x-4">
               <!-- User avatar with initials -->
               <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                {{ member.attributes?.username?.charAt(0)?.toUpperCase() || 'U' }}
+                {{ member.username?.charAt(0)?.toUpperCase() || 'U' }}
               </div>
               <!-- Member details -->
               <div>
                 <div class="font-semibold text-gray-800">
-                  {{ member.attributes?.username || 'Unknown User' }}
+                  {{ member.username || 'Unknown User' }}
                 </div>
                 <div class="text-sm text-gray-500">
-                  {{ member.attributes?.email || 'No email' }}
+                  {{ member.email || 'No email' }}
                 </div>
               </div>
             </div>
@@ -59,7 +59,7 @@
             <div class="flex items-center space-x-2">
               <!-- Admin badge for administrators -->
               <span 
-                v-if="Number(member.attributes?.isAdmin)" 
+                v-if="Number(member.isAdmin)" 
                 class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full"
               >
                 Admin
@@ -96,6 +96,10 @@
       type: Array,
       default: () => []
     }
+  })
+
+  onMounted(() => {
+    console.log(props.members)
   })
   
   // Component events
