@@ -9,20 +9,29 @@
   Provides non-intrusive feedback for successful operations.
 -->
 <template>
-  <!-- Success notification with fade transition -->
-  <transition name="fade">
+  <!-- Enhanced success notification with modern design -->
+  <transition name="slide-fade">
     <div v-if="visible" class="fixed top-6 right-6 z-50">
-      <!-- Success notification container with glass effect -->
-      <div class="bg-green-500 text-white px-6 py-3 rounded shadow-lg flex items-center min-w-[220px] backdrop-blur-sm">
-        <!-- Checkmark icon in circular background -->
-        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/20 mr-3">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" />
-            <path d="M8 12.5l2.5 2.5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+      <!-- Enhanced success notification container -->
+      <div class="bg-white border-l-4 border-green-500 rounded-xl shadow-lg border border-gray-100 px-6 py-4 flex items-center min-w-[300px] backdrop-blur-sm">
+        <!-- Enhanced checkmark icon -->
+        <div class="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 mr-4">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
           </svg>
-        </span>
-        <!-- Success message text -->
-        <span class="text-sm">{{ message }}</span>
+        </div>
+        <div class="flex-1">
+          <!-- Success title -->
+          <p class="text-sm font-medium text-gray-900">Success!</p>
+          <!-- Success message -->
+          <p class="text-sm text-gray-600 mt-0.5">{{ message }}</p>
+        </div>
+        <!-- Close button -->
+        <button @click="visible = false" class="ml-4 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-100">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
       </div>
     </div>
   </transition>
@@ -56,12 +65,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Fade transition styles for smooth appearance/disappearance */
-.fade-enter-active, .fade-leave-active {
-  /* transition: opacity 0.9s cubic-bezier(0.4,0,0.2,1); */
-  transition: opacity 0.6s cubic-bezier(0,0,1,1);
+/* Enhanced slide-fade transition for modern effect */
+.slide-fade-enter-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.fade-enter-from, .fade-leave-to {
+.slide-fade-leave-active {
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.slide-fade-enter-from {
   opacity: 0;
+  transform: translateX(100px);
+}
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateX(100px);
 }
 </style>
