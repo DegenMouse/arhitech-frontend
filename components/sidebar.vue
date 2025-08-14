@@ -15,9 +15,7 @@
     <div class="p-6 border-b border-gray-100">
       <div class="flex items-center space-x-3">
         <div class="p-2 bg-[#0743ae]/10 rounded-xl">
-          <svg class="w-6 h-6 text-[#0743ae]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-          </svg>
+          <div class="w-6 h-6 text-[#0743ae] text-xl select-none font-bold bonbance-font flex items-center justify-center">A</div>
         </div>
         <div>
           <div class="text-lg font-semibold text-gray-900">{{ company.companyName || 'No Company' }}</div>
@@ -160,3 +158,16 @@ const logout = () => {
 }
 
 </script>
+
+<style scoped>
+@font-face {
+  font-family: 'Bonbance';
+  src: url('/fonts/Bonbance-BoldCondensed.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+.bonbance-font {
+  font-family: 'Bonbance', sans-serif;
+}
+</style>
