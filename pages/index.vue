@@ -17,10 +17,10 @@
           <button class="text-white hover:text-gray-300 transition-colors text-sm">Preturi</button>
           <button class="text-white hover:text-gray-300 transition-colors text-sm">Resurse</button>
           
-          <a href="/dashboard" class="px-4 py-2 text-blue-950 bg-white rounded-full hover:bg-gray-100 hover:scale-105 transition-all duration-300 inter-font text-sm">
+          <a href="/login" class="px-4 py-2 text-blue-950 bg-white rounded-full hover:bg-gray-100 hover:scale-105 transition-all duration-300 inter-font text-sm">
             Dashboard Arhitect
           </a>
-          <a href="http://localhost:3001/login" class="px-4 py-2 text-blue-950 bg-white rounded-full hover:bg-gray-100 hover:scale-105 transition-all duration-300 inter-font text-sm">
+          <a href="http://localhost:3001" class="px-4 py-2 text-blue-950 bg-white rounded-full hover:bg-gray-100 hover:scale-105 transition-all duration-300 inter-font text-sm">
             Portal Client
           </a>
         </div>
@@ -31,9 +31,9 @@
     <div class="flex items-start justify-center pt-40">
       <div class="text-center text-white">
         <h1 class="text-6xl font-bold mb-6 bonbance-font">
-          <span class="text-9xl block mt-2">ArhiTech</span>
+          <span class="text-9xl block mt-2 select-none">ArhiTech</span>
         </h1>
-        <p class="text-3xl bonbance-font mb-32">Noul tau sistem pentru organizarea si colaborarea proiectelor</p>
+        <p class="text-3xl bonbance-font mb-32 select-none">Noul tau sistem pentru organizarea si colaborarea proiectelor</p>
       </div>
     </div>
   </div>
@@ -56,6 +56,7 @@
 .inter-font {
   font-family: 'Inter', sans-serif;
 }
+
 </style>
 
 <script setup>
