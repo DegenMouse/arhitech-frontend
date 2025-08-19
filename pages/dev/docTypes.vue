@@ -288,12 +288,13 @@
       @select="onFollowedBySelected"
     />
 
+    
     <DevDocTypeSelector
       :show="requiredDocsSelector.show"
       title="Select Required Documents"
       :docTypes="docTypes"
       :excludeIds="[editModal.form.followedBy].filter(Boolean)"
-      filterType="input"
+      
       multiple
       :initialSelection="requiredDocsSelector.selected"
       @close="closeRequiredDocsSelector"
@@ -784,8 +785,8 @@ function openEditModal(docType) {
   editModal.docType = docType
   editModal.isNew = false
   editModal.form.name = docType.name
-  editModal.form.isInput = docType.isInput
-  editModal.form.isNull = docType.isNull
+  editModal.form.isInput = parseInt(docType.isInput)
+  editModal.form.isNull = parseInt(docType.isNull)
   editModal.form.tag = docType.tag
   editModal.form.localitate_id = docType.localitate_id
   editModal.form.followedBy = docType.followedBy
@@ -840,15 +841,21 @@ async function saveDocType() {
       data: {
         attributes: {
           name: editModal.form.name,
-          isInput: editModal.form.isInput,
-          isNull: editModal.form.isNull,
+          isInput: editModal.form.isInput != null ? Number(editModal.form.isInput) : 0,
+          isNull: editModal.form.isNull != null ? Number(editModal.form.isNull) : 0,
           tag: editModal.form.tag,
-          localitate_id: editModal.form.localitate_id,
-          followedBy: editModal.form.followedBy
+          localitate_id: editModal.form.localitate_id ? Number(editModal.form.localitate_id) : null,
+          followedBy: editModal.form.followedBy ? Number(editModal.form.followedBy) : null
         }
       }
     }
     
+    console.log('Form values before conversion:', {
+      isInput: editModal.form.isInput,
+      isNull: editModal.form.isNull,
+      isInputType: typeof editModal.form.isInput,
+      isNullType: typeof editModal.form.isNull
+    })
     console.log('Creating docType with body:', JSON.stringify(requestBody, null, 2))
     
     let response
