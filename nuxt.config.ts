@@ -5,6 +5,8 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss'],
 
+  css: ['~/assets/css/fonts.css'],
+
   runtimeConfig: {
     public: {
       dbApi: "https://dbapi01.softaccel.net/apis/arhiTech",

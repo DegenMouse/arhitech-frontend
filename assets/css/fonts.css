@@ -1,0 +1,7 @@
+@font-face {
+  font-family: 'Bonbance';
+  src: url('/fonts/Bonbance-BoldCondensed.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}

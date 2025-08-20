@@ -1,98 +1,161 @@
 <!--
   pages/login.vue
   ---------------
-  Authentication page that handles both login and signup functionality.
-  Features a toggle between login and signup modes with form validation.
+  Enhanced authentication page with modern UI design and improved user experience.
+  Features a sleek toggle between login and signup modes with professional styling.
   Uses FormData for login requests and JSON for signup requests.
-  Stores JWT token in localStorage and redirects to home page on success.
-  Includes error handling and user feedback for failed attempts.
+  Stores JWT token in localStorage and redirects to dashboard on success.
+  Includes comprehensive error handling and visual feedback for users.
 -->
 <template>
-    <!-- Main authentication container with centered layout -->
-    <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-      <!-- App branding and description -->
+  <!-- Enhanced main authentication container with gradient background -->
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div class="w-full max-w-md">
+      <!-- Enhanced app branding section -->
       <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-gray-800">Welcome to MyApp</h1>
-        <p class="text-gray-600 mt-2">Simple login page built with Nuxt 3</p>
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-[#0743ae] rounded-2xl mb-4">
+          <div class="text-white text-3xl font-bold bonbance-font">A</div>
+        </div>
+        <h1 class="text-3xl font-light text-gray-900 mb-2">Welcome to ArhiTech</h1>
+        <p class="text-gray-600">Romanian architectural document management system</p>
       </div>
       
-      <!-- Authentication form with toggle between login/signup -->
-      <form @submit.prevent="isSignUp ? handleSignUp() : handleLogin()" class="bg-white p-6 rounded-xl shadow-md w-full max-w-sm">
-        <!-- Mode toggle buttons (Login/Sign Up) -->
-        <div class="mb-4">
-          <div class="flex rounded-lg border border-gray-300">
+      <!-- Enhanced authentication form -->
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+        <!-- Enhanced mode toggle buttons -->
+        <div class="mb-6">
+          <div class="flex bg-gray-100 rounded-xl p-1">
             <button 
               type="button"
               @click="isSignUp = false" 
-              :class="!isSignUp ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'"
-              class="flex-1 py-2 px-4 rounded-l-lg transition"
+              :class="!isSignUp ? 'bg-[#0743ae] text-white shadow-sm' : 'text-gray-600'"
+              class="flex-1 py-2.5 px-4 rounded-lg font-medium transition-all duration-100 text-sm"
             >
+              <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-6 0a4 4 0 01-4 4H7a4 4 0 01-4-4z"></path>
+              </svg>
               Log In
             </button>
             <button 
               type="button"
               @click="isSignUp = true" 
-              :class="isSignUp ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'"
-              class="flex-1 py-2 px-4 rounded-r-lg transition"
+              :class="isSignUp ? 'bg-[#0743ae] text-white shadow-sm' : 'text-gray-600'"
+              class="flex-1 py-2.5 px-4 rounded-lg font-medium transition-all duration-100 text-sm"
             >
+              <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+              </svg>
               Sign Up
             </button>
           </div>
         </div>
 
-        <!-- Name field (only shown for signup) -->
-        <label v-if="isSignUp" class="block mb-4">
-          <span class="text-gray-700">Name</span>
-          <input
-            v-model="name"
-            type="text"
-            required
-            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-          />
-        </label>
+        <form @submit.prevent="isSignUp ? handleSignUp() : handleLogin()" class="space-y-5">
+          <!-- Enhanced name field (only shown for signup) -->
+          <div v-if="isSignUp" class="space-y-2">
+            <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>
+              <input
+                id="name"
+                v-model="name"
+                type="text"
+                required
+                placeholder="Enter your full name"
+                class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0743ae] focus:outline-none focus:ring-2 focus:ring-[#0743ae] focus:ring-offset-2 transition-all duration-100 hover:border-gray-300"
+              />
+            </div>
+          </div>
 
-        <!-- Email field (required for both modes) -->
-        <label class="block mb-4">
-          <span class="text-gray-700">Email</span>
-          <input
-            v-model="email"
-            type="email"
-            required
-            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-          />
-        </label>
-  
-        <!-- Password field (required for both modes) -->
-        <label class="block mb-6">
-          <span class="text-gray-700">Password</span>
-          <input
-            v-model="password"
-            type="password"
-            required
-            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-          />
-        </label>
-  
-        <!-- Error message display -->
-        <p v-if="error" class="text-red-500 text-sm mb-4">{{ errorMessage }}</p>
-        <!-- Submit button (changes text based on mode) -->
-        <button
-          type="submit"
-          class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-        >
-          {{ isSignUp ? 'Sign Up' : 'Log In' }}
-        </button>
-        
-        <!-- Mode toggle link -->
-        <button 
-          type="button"
-          @click="isSignUp = !isSignUp"
-          class="w-full mt-3 text-sm text-gray-600 hover:text-gray-800 transition"
-        >
-          {{ isSignUp ? 'Already have an account? Log in' : 'No account? Create one' }}
-        </button>
-      </form>
+          <!-- Enhanced email field -->
+          <div class="space-y-2">
+            <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <input
+                id="email"
+                v-model="email"
+                type="email"
+                required
+                placeholder="Enter your email"
+                class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0743ae] focus:outline-none focus:ring-2 focus:ring-[#0743ae] focus:ring-offset-2 transition-all duration-100 hover:border-gray-300"
+              />
+            </div>
+          </div>
+    
+          <!-- Enhanced password field -->
+          <div class="space-y-2">
+            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+              </div>
+              <input
+                id="password"
+                v-model="password"
+                type="password"
+                required
+                placeholder="Enter your password"
+                class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0743ae] focus:outline-none focus:ring-2 focus:ring-[#0743ae] focus:ring-offset-2 transition-all duration-100 hover:border-gray-300"
+              />
+            </div>
+          </div>
+    
+          <!-- Enhanced error message display -->
+          <div v-if="error" class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <p class="text-red-700 text-sm font-medium">{{ errorMessage }}</p>
+            </div>
+          </div>
+
+          <!-- Enhanced submit button -->
+          <button
+            type="submit"
+            class="w-full bg-[#0743ae] hover:bg-[#0743ae]/90 text-white py-3 rounded-xl font-medium transition-all duration-100 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#0743ae] focus:ring-offset-2 transform hover:scale-105"
+          >
+            <svg v-if="!isSignUp" class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-6 0a4 4 0 01-4 4H7a4 4 0 01-4-4z"></path>
+            </svg>
+            <svg v-else class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+            </svg>
+            {{ isSignUp ? 'Create Account' : 'Sign In' }}
+          </button>
+          
+          <!-- Enhanced mode toggle link -->
+          <div class="text-center pt-4">
+            <button 
+              type="button"
+              @click="isSignUp = !isSignUp"
+              class="text-sm text-gray-600 hover:text-[#0743ae] transition-colors duration-100"
+            >
+              {{ isSignUp ? 'Already have an account? Sign in' : 'Need an account? Create one' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Footer -->
+      <div class="text-center mt-8">
+        <p class="text-sm text-gray-500">
+          &copy; 2025 ArhiTech. Professional architectural document management.
+        </p>
+      </div>
     </div>
+  </div>
 </template>
   
 <script setup>
@@ -143,7 +206,7 @@ function handleLogin() {
         // Store JWT token and trigger auth re-evaluation
         localStorage.setItem('jwt', data.jwt)
         auth.value.reEvalRequired = true
-        navigateTo('/')
+        navigateTo('/dashboard')
       } 
     }).catch(error => {console.error(error)})
   }else{
@@ -191,3 +254,16 @@ function handleSignUp() {
   }
 }
 </script>
+
+<style scoped>
+@font-face {
+  font-family: 'Bonbance';
+  src: url('/fonts/Bonbance-BoldCondensed.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+.bonbance-font {
+  font-family: 'Bonbance', sans-serif;
+}
+</style>

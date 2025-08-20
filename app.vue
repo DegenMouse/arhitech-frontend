@@ -3,15 +3,15 @@
     <NuxtPage />
   </NuxtLayout>
   <ModalsError 
-    v-if="error.show"
+    v-if="error.message"
     :title="error.title"
     :message="error.message"
-    @close="error.show = false; error.title = null; error.message = null"
+    @close="error.title = 'An Error Occurred'; error.message = null"
   />
   <ModalsSuccess 
-    v-if="success.show"
+    v-if="success.message"
     :message="success.message"
-    @close="success.show = false; success.message = null"
+    @close="success.message = null"
   />
   <ModalsConfirm
     v-if="confirmModal.show.value"

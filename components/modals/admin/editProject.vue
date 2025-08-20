@@ -231,14 +231,12 @@ const handleSubmit = async () => {
     }
 
     success.value.message = 'Project created successfully'
-    success.value.show = true
 
     emit('close')
     await fetchProjects()
   }catch(err){
     console.error('Failed to create project:', err)
     error.value.message = 'Unable to create project. Please try again.'
-    error.value.show = true
   }
 
   // emit('close')

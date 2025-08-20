@@ -8,32 +8,40 @@
   Provides simple OK button for dismissal and proper error state styling.
 -->
 <template>
-  <!-- Modal overlay with click-outside-to-close -->
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="emit('close')">
-    <!-- Modal content container with click stop propagation -->
-    <div class="bg-white rounded-xl shadow-xl p-8 max-w-md w-full mx-4" @click.stop>
-      <!-- Modal header with error title and close button -->
-      <div class="flex justify-between items-center mb-6">
-        <h3 class="text-2xl font-semibold text-red-600">{{displayTitle}}</h3>
-        <!-- Close button with X icon -->
-        <button @click="emit('close')" class="text-gray-500 hover:text-gray-700">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- Enhanced modal overlay with improved backdrop -->
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="emit('close')">
+    <!-- Enhanced modal content with modern design -->
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 p-8 max-w-md w-full mx-auto transform transition-all duration-200" @click.stop>
+      <!-- Enhanced modal header -->
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center space-x-3">
+          <!-- Error icon -->
+          <div class="p-2 bg-red-100 rounded-xl">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-red-600">{{ displayTitle }}</h3>
+        </div>
+        <!-- Enhanced close button -->
+        <button @click="emit('close')" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
       
-      <!-- Error message content -->
-      <div class="mb-8">
-        <p class="text-gray-600">{{ message }}</p>
+      <!-- Enhanced error message content -->
+      <div class="mb-8 bg-red-50 border border-red-200 rounded-xl p-4">
+        <p class="text-red-800 leading-relaxed">{{ message }}</p>
       </div>
       
-      <!-- Action button -->
+      <!-- Enhanced action button -->
       <div class="flex justify-end">
-        <!-- OK button for dismissing error -->
+        <!-- Enhanced OK button -->
         <button
           @click="emit('close')"
-          class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-all duration-100 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transform hover:scale-105"
         >
           OK
         </button>
