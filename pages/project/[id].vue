@@ -67,19 +67,22 @@
           <div class="p-8">
             <!-- Documents Panel -->
             <ProjectDocuments
-              v-show="activeTab === 'documents'"
+              v-if="activeTab === 'documents'"
+              :key="`documents-${project.id}`"
               :project="project"
             />
 
             <!-- Clocked In Panel -->
             <ProjectClockedIn
-              v-show="activeTab === 'clocked-in'"
+              v-if="activeTab === 'clocked-in'"
+              :key="`clocked-in-${project.id}`"
               :project="project"
             />
 
             <!-- Settings Panel -->
             <ProjectSettings
-              v-show="activeTab === 'settings'"
+              v-if="activeTab === 'settings'"
+              :key="`settings-${project.id}`"
               :project="project"
               @fetchProject="fetchProject"
             />
