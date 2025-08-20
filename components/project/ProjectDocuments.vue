@@ -282,6 +282,10 @@ async function docOpen(docId) {
  * Uses presigned URL for direct upload and updates isModified flag
  */
 async function docUpload(file, docId) {
+  console.log("docUpload")
+  console.log(file)
+  console.log(docId)
+  // return
   if(!(file instanceof File)){
     return
   }
@@ -328,30 +332,30 @@ async function docUpload(file, docId) {
     })
 
   // Upload file to MinIO
-  const ok = await fetch(minioUrl.url, {
+  await fetch(minioUrl.url, {
     method:'PUT',
     body: file
   }).then(res => {
     if(!res.ok){
-      throw new Error('Failed to upload file')
+      throw new Error('Failed to upload file nigger')
     }else{
       return true
     }
   }).catch(err => {
     console.err(err)
-    return false
+    throw new Error('MINIO ERROR')
   })
 
   // Update document status to modified if upload successful
   const docIndex = docs.value.findIndex(doc => doc.id === docId)
-  if(ok && docIndex !== -1 && docs.value[docIndex].isModified != '1'){
+  if(docIndex !== -1 && docs.value[docIndex].state == 'missing'){
     await fetch(dbApi + '/data/projDocs/' + docId, {
       method: 'PATCH',
       body: JSON.stringify({
         data: {
           id: docId,
           attributes: {
-            isModified: "1"
+            state: "pending"
           }
         }
       })
@@ -362,14 +366,12 @@ async function docUpload(file, docId) {
       docs.value[docIndex].isModified = '1'
     }).catch(err => {
       console.error('Failed to update document:', err)
-      ok = false
+      throw new Error('DB ERROR')
     })
   }
 
   // Show success message if upload completed
-  if(ok){
-    success.value.message = "Document uploaded successfully"
-  }
+  success.value.message = "Document uploaded successfully"
 }
 
 /**
