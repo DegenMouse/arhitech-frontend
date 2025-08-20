@@ -80,26 +80,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Recent Activity -->
         <div class="lg:col-span-2">
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <div class="flex items-center justify-between mb-6">
-              <h2 class="text-xl font-semibold text-gray-900">Notifications</h2>
-              <button class="text-[#0743ae] hover:text-[#0743ae]/80 text-sm font-medium">View All</button>
-            </div>
-            <div class="space-y-6">
-              <div v-for="activity in recentActivity" :key="activity.id" class="flex items-start space-x-4">
-                <div :class="activity.iconBg" class="p-2 rounded-xl flex-shrink-0">
-                  <svg class="w-5 h-5" :class="activity.iconColor" fill="none" stroke="currentColor" viewBox="0 0 24 24" v-html="activity.icon"></svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm text-gray-900">{{ activity.description }}</p>
-                  <p class="text-xs text-gray-500 mt-1">{{ activity.time }}</p>
-                </div>
-                <div v-if="activity.status" :class="activity.statusColor" class="px-2 py-1 rounded-full text-xs font-medium">
-                  {{ activity.status }}
-                </div>
-              </div>
-            </div>
-          </div>
+          <DasboardNotificationsPanel/>
         </div>
 
         <!-- To-Do Panel -->
@@ -144,58 +125,6 @@ const stats = ref({
   completionRate: 87
 })
 
-const recentActivity = ref([
-  {
-    id: 1,
-    description: 'New project "Residential Complex A" was created',
-    time: '2 hours ago',
-    status: 'New',
-    statusColor: 'bg-green-100 text-green-800',
-    iconBg: 'bg-[#0743ae]/10',
-    iconColor: 'text-[#0743ae]',
-    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>'
-  },
-  {
-    id: 2,
-    description: 'Document "Building Permit Form" was uploaded',
-    time: '4 hours ago',
-    status: 'Uploaded',
-    statusColor: 'bg-blue-100 text-blue-800',
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
-    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>'
-  },
-  {
-    id: 3,
-    description: 'Maria Popescu joined the team',
-    time: '1 day ago',
-    status: 'Joined',
-    statusColor: 'bg-green-100 text-green-800',
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
-    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>'
-  },
-  {
-    id: 4,
-    description: 'Project "Office Building B" completed anteCU phase',
-    time: '2 days ago',
-    status: 'Completed',
-    statusColor: 'bg-green-100 text-green-800',
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
-    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
-  },
-  {
-    id: 5,
-    description: 'Document review pending for "Commercial Center"',
-    time: '3 days ago',
-    status: 'Pending',
-    statusColor: 'bg-orange-100 text-orange-800',
-    iconBg: 'bg-orange-100',
-    iconColor: 'text-orange-600',
-    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
-  }
-])
 
 
 // To-do list data

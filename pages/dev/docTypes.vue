@@ -23,8 +23,6 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tag</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Followed By</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Required Docs</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Template Actions</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Manage</th>
           </tr>
@@ -45,7 +43,8 @@
                     :class="{
                       'bg-yellow-100 text-yellow-800': docType.tag === 'CU',
                       'bg-purple-100 text-purple-800': docType.tag === 'avize',
-                      'bg-indigo-100 text-indigo-800': docType.tag === 'studii'
+                      'bg-indigo-100 text-indigo-800': docType.tag === 'studii',
+                      'bg-red-100 text-red-800': docType.tag === 'needed'
                     }"
                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
                 {{ docType.tag }}
@@ -54,20 +53,6 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               {{ docType.localitate_name || (docType.localitate_id ? `ID: ${docType.localitate_id}` : 'General') }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              <span v-if="docType.followedBy_name" class="text-blue-600">
-                {{ docType.followedBy_name }}
-              </span>
-              <span v-else class="text-gray-400">-</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              <button v-if="docType.requiredDocs && docType.requiredDocs.length > 0" 
-                      @click="openRequiredDocsModal(docType)"
-                      class="text-blue-600 hover:text-blue-900 text-xs">
-                View ({{ docType.requiredDocs.length }})
-              </button>
-              <span v-else class="text-gray-400 text-xs">-</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <!-- Template actions for output docTypes -->
@@ -119,13 +104,6 @@
       @close="closeViewModal"
     />
 
-    <!-- Required Docs Viewer Modal -->
-    <DevRequiredDocsViewer
-      :show="requiredDocsModal.show"
-      :docType="requiredDocsModal.docType"
-      :requiredDocs="requiredDocsModal.docType?.requiredDocs"
-      @close="closeRequiredDocsModal"
-    />
 
     <!-- Edit DocType Modal -->
     <div v-if="editModal.show" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -167,6 +145,7 @@
                 <option value="CU">CU (Construction Permit)</option>
                 <option value="avize">Avize (Approvals)</option>
                 <option value="studii">Studii (Studies)</option>
+                <option value="needed">Needed (Required Document)</option>
               </select>
             </div>
 
@@ -183,31 +162,6 @@
               </select>
             </div>
 
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Followed By (for requests)
-              </label>
-              <div class="flex items-center space-x-2">
-                <div class="flex-1">
-                  <input v-model="editModal.followedByName" 
-                         type="text" 
-                         readonly 
-                         placeholder="None selected"
-                         class="block w-full border border-gray-300 rounded px-3 py-2 bg-gray-50 text-gray-700">
-                </div>
-                <button type="button" 
-                        @click="openFollowedBySelector"
-                        class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-                  {{ editModal.form.followedBy ? 'Change' : 'Select' }}
-                </button>
-                <button v-if="editModal.form.followedBy" 
-                        type="button" 
-                        @click="clearFollowedBy"
-                        class="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm">
-                  Clear
-                </button>
-              </div>
-            </div>
 
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -220,31 +174,6 @@
               </select>
             </div>
 
-            <div v-if="editModal.form.followedBy" class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Required Documents Package
-              </label>
-              <div class="flex items-center space-x-2">
-                <div class="flex-1">
-                  <input :value="editModal.requiredDocsText" 
-                         type="text" 
-                         readonly 
-                         placeholder="No documents selected"
-                         class="block w-full border border-gray-300 rounded px-3 py-2 bg-gray-50 text-gray-700">
-                </div>
-                <button type="button" 
-                        @click="openRequiredDocsSelector"
-                        class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-                  {{ editModal.form.requiredDocs.length > 0 ? 'Change' : 'Select' }}
-                </button>
-                <button v-if="editModal.form.requiredDocs.length > 0" 
-                        type="button" 
-                        @click="clearRequiredDocs"
-                        class="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm">
-                  Clear
-                </button>
-              </div>
-            </div>
 
             <!-- PDF Upload for new OUTPUT docTypes only -->
             <div v-if="editModal.isNew && editModal.form.isInput === 0" class="mb-6">
@@ -277,29 +206,6 @@
       </div>
     </div>
 
-    <!-- DocType Selector Modals -->
-    <DevDocTypeSelector
-      :show="followedByModal.show"
-      title="Select Followed By DocType"
-      :docTypes="docTypes"
-      :excludeIds="[editModal.docType?.id].filter(Boolean)"
-      :initialSelection="followedByModal.selected"
-      @close="closeFollowedByModal"
-      @select="onFollowedBySelected"
-    />
-
-    
-    <DevDocTypeSelector
-      :show="requiredDocsSelector.show"
-      title="Select Required Documents"
-      :docTypes="docTypes"
-      :excludeIds="[editModal.form.followedBy].filter(Boolean)"
-      
-      multiple
-      :initialSelection="requiredDocsSelector.selected"
-      @close="closeRequiredDocsSelector"
-      @select="onRequiredDocsSelected"
-    />
   </div>
 </template>
 
@@ -316,9 +222,6 @@ const { error, success } = useUI()
 const loading = ref(true)
 const docTypes = ref([])
 
-// Computed properties for filtering docTypes
-const inputDocTypes = computed(() => docTypes.value.filter(dt => dt.isInput === '1'))
-const outputDocTypes = computed(() => docTypes.value.filter(dt => dt.isInput === '0'))
 
 // Upload modal state
 const uploadModal = reactive({
@@ -335,11 +238,6 @@ const viewModal = reactive({
   url: null
 })
 
-// Required docs modal state
-const requiredDocsModal = reactive({
-  show: false,
-  docType: null
-})
 
 // Edit modal state
 const editModal = reactive({
@@ -351,27 +249,13 @@ const editModal = reactive({
     isInput: 1,
     isNull: 0,
     tag: null,
-    localitate_id: null,
-    followedBy: null,
-    requiredDocs: []
+    localitate_id: null
   },
   selectedFile: null,
   fileError: null,
-  saving: false,
-  followedByName: '',
-  requiredDocsText: ''
+  saving: false
 })
 
-// DocType selector modals state
-const followedByModal = reactive({
-  show: false,
-  selected: null
-})
-
-const requiredDocsSelector = reactive({
-  show: false,
-  selected: []
-})
 
 /**
  * Handle PDF file selection and validation
@@ -440,7 +324,7 @@ async function checkTemplateExists(docType) {
 async function fetchDocTypes() {
   try {
     loading.value = true
-    const response = await fetch(`${dbApi}/data/docTypes?include=localitate_id,followedBy`)
+    const response = await fetch(`${dbApi}/data/docTypes`)
     
     if (!response.ok) {
       throw new Error('Failed to fetch docTypes')
@@ -448,34 +332,14 @@ async function fetchDocTypes() {
     
     const data = await response.json()
     
-    // Process docTypes with relationships
+    // Process docTypes 
     docTypes.value = await Promise.all(data.data.map(async (doc) => {
       const docType = {
         ...doc.attributes,
-        // Extract localitate from relationships
-        localitate_id: doc.relationships.localitate_id?.data?.id || null,
-        // Extract followedBy from relationships
-        followedBy: doc.relationships.followedBy?.data?.id || null
-      }
-      
-      // If localitate is included, find the name
-      if (docType.localitate_id && data.includes) {
-        const localitate = data.includes.find(inc => 
-          inc.type === 'localitati' && inc.id === docType.localitate_id
-        )
-        if (localitate) {
-          docType.localitate_name = localitate.attributes.denumire
-        }
-      }
-      
-      // If followedBy is included, find the name
-      if (docType.followedBy && data.includes) {
-        const followedByDoc = data.includes.find(inc => 
-          inc.type === 'docTypes' && inc.id === docType.followedBy
-        )
-        if (followedByDoc) {
-          docType.followedBy_name = followedByDoc.attributes.name
-        }
+        // Extract localitate_id from relationships if it exists
+        localitate_id: doc.relationships?.localitate_id?.data?.id || doc.attributes.localitate_id || null,
+        // Set localitate name using helper function
+        localitate_name: getLocalitateNameById(doc.relationships?.localitate_id?.data?.id || doc.attributes.localitate_id)
       }
       
       // Check if template exists for output documents only
@@ -488,8 +352,6 @@ async function fetchDocTypes() {
       return docType
     }))
     
-    // Fetch required documents for each docType
-    await fetchRequiredDocs()
     
   } catch (err) {
     console.error('Error fetching docTypes:', err)
@@ -501,53 +363,6 @@ async function fetchDocTypes() {
   }
 }
 
-/**
- * Fetch required documents packages for all docTypes
- */
-async function fetchRequiredDocs() {
-  try {
-    const response = await fetch(`${dbApi}/data/doc_packages`)
-    
-    if (!response.ok) {
-      console.warn('Could not fetch doc packages')
-      return
-    }
-    
-    const data = await response.json()
-    
-    // Group packages by main docType
-    const packagesByMain = {}
-    data.data.forEach(pkg => {
-      // Extract IDs from relationships (JSON:API format)
-      const mainId = pkg.relationships.main?.data?.id
-      const adjacentId = pkg.relationships.adjacent?.data?.id
-      
-      if (!mainId || !adjacentId) return
-      
-      if (!packagesByMain[mainId]) {
-        packagesByMain[mainId] = []
-      }
-      
-      // Find the adjacent docType in our docTypes array to get the name
-      const adjacentDocType = docTypes.value.find(dt => dt.id == adjacentId)
-      
-      if (adjacentDocType) {
-        packagesByMain[mainId].push({
-          id: adjacentId,
-          name: adjacentDocType.name
-        })
-      }
-    })
-    
-    // Add required docs to docTypes
-    docTypes.value.forEach(docType => {
-      docType.requiredDocs = packagesByMain[docType.id] || []
-    })
-    
-  } catch (err) {
-    console.warn('Error fetching required docs:', err)
-  }
-}
 
 /**
  * Open upload modal for a docType
@@ -662,97 +477,8 @@ function closeViewModal() {
   viewModal.url = null
 }
 
-/**
- * Open required docs modal
- */
-function openRequiredDocsModal(docType) {
-  requiredDocsModal.show = true
-  requiredDocsModal.docType = docType
-}
 
-/**
- * Close required docs modal
- */
-function closeRequiredDocsModal() {
-  requiredDocsModal.show = false
-  requiredDocsModal.docType = null
-}
 
-/**
- * Open followed by selector modal
- */
-function openFollowedBySelector() {
-  followedByModal.selected = editModal.form.followedBy ? 
-    docTypes.value.find(dt => dt.id === editModal.form.followedBy) : null
-  followedByModal.show = true
-}
-
-/**
- * Close followed by selector modal
- */
-function closeFollowedByModal() {
-  followedByModal.show = false
-  followedByModal.selected = null
-}
-
-/**
- * Handle followed by selection
- */
-function onFollowedBySelected(selectedDocType) {
-  if (selectedDocType) {
-    editModal.form.followedBy = selectedDocType.id
-    editModal.followedByName = selectedDocType.name
-  }
-  closeFollowedByModal()
-}
-
-/**
- * Clear followed by selection
- */
-function clearFollowedBy() {
-  editModal.form.followedBy = null
-  editModal.followedByName = ''
-  editModal.form.requiredDocs = []
-  editModal.requiredDocsText = ''
-}
-
-/**
- * Open required docs selector modal
- */
-function openRequiredDocsSelector() {
-  // Convert IDs to docType objects for initial selection
-  requiredDocsSelector.selected = editModal.form.requiredDocs.map(id =>
-    docTypes.value.find(dt => dt.id === id)
-  ).filter(Boolean)
-  requiredDocsSelector.show = true
-}
-
-/**
- * Close required docs selector modal
- */
-function closeRequiredDocsSelector() {
-  requiredDocsSelector.show = false
-  requiredDocsSelector.selected = []
-}
-
-/**
- * Handle required docs selection
- */
-function onRequiredDocsSelected(selectedDocTypes) {
-  editModal.form.requiredDocs = selectedDocTypes.map(dt => dt.id)
-  editModal.requiredDocsText = selectedDocTypes.length > 0 ?
-    `${selectedDocTypes.length} document(s): ${selectedDocTypes.map(dt => dt.name).join(', ')}` :
-    ''
-  closeRequiredDocsSelector()
-}
-
-/**
- * Clear required docs selection
- */
-function clearRequiredDocs() {
-  editModal.form.requiredDocs = []
-  editModal.requiredDocsText = ''
-}
 
 /**
  * Open add modal for new docType
@@ -766,15 +492,11 @@ function openAddModal() {
     isInput: 1,
     isNull: 0,
     tag: null,
-    localitate_id: null,
-    followedBy: null,
-    requiredDocs: []
+    localitate_id: null
   }
   editModal.selectedFile = null
   editModal.fileError = null
   editModal.saving = false
-  editModal.followedByName = ''
-  editModal.requiredDocsText = ''
 }
 
 /**
@@ -789,15 +511,7 @@ function openEditModal(docType) {
   editModal.form.isNull = parseInt(docType.isNull)
   editModal.form.tag = docType.tag
   editModal.form.localitate_id = docType.localitate_id
-  editModal.form.followedBy = docType.followedBy
-  editModal.form.requiredDocs = docType.requiredDocs ? docType.requiredDocs.map(rd => rd.id) : []
   editModal.saving = false
-  
-  // Set display names
-  editModal.followedByName = docType.followedBy_name || ''
-  editModal.requiredDocsText = docType.requiredDocs && docType.requiredDocs.length > 0 ?
-    `${docType.requiredDocs.length} document(s): ${docType.requiredDocs.map(rd => rd.name).join(', ')}` :
-    ''
 }
 
 /**
@@ -812,15 +526,11 @@ function closeEditModal() {
     isInput: 1,
     isNull: 0,
     tag: null,
-    localitate_id: null,
-    followedBy: null,
-    requiredDocs: []
+    localitate_id: null
   }
   editModal.selectedFile = null
   editModal.fileError = null
   editModal.saving = false
-  editModal.followedByName = ''
-  editModal.requiredDocsText = ''
 }
 
 /**
@@ -844,8 +554,7 @@ async function saveDocType() {
           isInput: editModal.form.isInput != null ? Number(editModal.form.isInput) : 0,
           isNull: editModal.form.isNull != null ? Number(editModal.form.isNull) : 0,
           tag: editModal.form.tag,
-          localitate_id: editModal.form.localitate_id ? Number(editModal.form.localitate_id) : null,
-          followedBy: editModal.form.followedBy ? Number(editModal.form.followedBy) : null
+          localitate_id: editModal.form.localitate_id ? Number(editModal.form.localitate_id) : null
         }
       }
     }
@@ -929,23 +638,13 @@ async function saveDocType() {
         hasTemplate = null
       }
       
-      // Save required documents packages if any
-      if (editModal.form.followedBy && editModal.form.requiredDocs.length > 0) {
-        await saveRequiredDocsPackages(newDocTypeId, editModal.form.requiredDocs)
-      }
       
       // Add new docType to local state
       const newDocType = {
         ...responseData.data.attributes,
         localitate_id: editModal.form.localitate_id,
-        followedBy: editModal.form.followedBy,
         localitate_name: getLocalitateNameById(editModal.form.localitate_id),
-        followedBy_name: getDocTypeNameById(editModal.form.followedBy),
-        hasTemplate: hasTemplate,
-        requiredDocs: editModal.form.requiredDocs.map(id => ({
-          id,
-          name: getDocTypeNameById(id)
-        })).filter(doc => doc.name)
+        hasTemplate: hasTemplate
       }
       docTypes.value.push(newDocType)
     } else {
@@ -957,21 +656,7 @@ async function saveDocType() {
         docTypes.value[docTypeIndex].isNull = editModal.form.isNull
         docTypes.value[docTypeIndex].tag = editModal.form.tag
         docTypes.value[docTypeIndex].localitate_id = editModal.form.localitate_id
-        docTypes.value[docTypeIndex].followedBy = editModal.form.followedBy
         docTypes.value[docTypeIndex].localitate_name = getLocalitateNameById(editModal.form.localitate_id)
-        docTypes.value[docTypeIndex].followedBy_name = getDocTypeNameById(editModal.form.followedBy)
-        
-        // Update required docs packages
-        if (editModal.form.followedBy && editModal.form.requiredDocs.length > 0) {
-          await saveRequiredDocsPackages(editModal.docType.id, editModal.form.requiredDocs)
-        } else {
-          await deleteRequiredDocsPackages(editModal.docType.id)
-        }
-        
-        docTypes.value[docTypeIndex].requiredDocs = editModal.form.requiredDocs.map(id => ({
-          id,
-          name: getDocTypeNameById(id)
-        })).filter(doc => doc.name)
       }
     }
     
@@ -1007,83 +692,8 @@ function getLocalitateNameById(id) {
   return null
 }
 
-/**
- * Helper function to get docType name by ID
- */
-function getDocTypeNameById(id) {
-  const docType = docTypes.value.find(dt => dt.id === id)
-  return docType?.name || null
-}
 
-/**
- * Save required documents packages for a docType
- */
-async function saveRequiredDocsPackages(mainDocTypeId, requiredDocIds) {
-  try {
-    // First, delete existing packages for this main docType
-    await deleteRequiredDocsPackages(mainDocTypeId)
-    
-    // Then create new packages
-    for (const adjacentId of requiredDocIds) {
-      const requestBody = {
-        data: {
-          attributes: {
-            main: parseInt(mainDocTypeId),
-            adjacent: parseInt(adjacentId)
-          }
-        }
-      }
-      
-      const response = await fetch(`${dbApi}/data/doc_packages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      })
-      
-      if (!response.ok) {
-        console.warn(`Failed to create doc package: ${mainDocTypeId} -> ${adjacentId}`)
-      }
-    }
-  } catch (err) {
-    console.error('Error saving required docs packages:', err)
-  }
-}
 
-/**
- * Delete required documents packages for a docType
- */
-async function deleteRequiredDocsPackages(mainDocTypeId) {
-  try {
-    // Get existing packages for this main docType
-    const response = await fetch(`${dbApi}/data/doc_packages`)
-    
-    if (!response.ok) {
-      console.warn('Could not fetch existing doc packages for deletion')
-      return
-    }
-    
-    const data = await response.json()
-    // Filter packages where main relationship matches our docType ID
-    const packagesToDelete = data.data.filter(pkg => 
-      pkg.relationships.main?.data?.id == mainDocTypeId
-    )
-    
-    // Delete each package
-    for (const pkg of packagesToDelete) {
-      const deleteResponse = await fetch(`${dbApi}/data/doc_packages/${pkg.id}`, {
-        method: 'DELETE'
-      })
-      
-      if (!deleteResponse.ok) {
-        console.warn(`Failed to delete doc package ${pkg.id}`)
-      }
-    }
-  } catch (err) {
-    console.error('Error deleting required docs packages:', err)
-  }
-}
 
 /**
  * Remove template from MinIO
