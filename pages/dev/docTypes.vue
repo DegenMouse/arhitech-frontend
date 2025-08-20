@@ -23,7 +23,6 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tag</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Followed By</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Required Docs</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Template Actions</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Manage</th>
@@ -35,32 +34,23 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ docType.id }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ docType.name }}</td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <span :class="docType.isInput === '1' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'" 
+              <span :class="Number(docType.isInput) ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'" 
                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                {{ docType.isInput === '1' ? 'Input' : 'Output' }}
+                {{ Number(docType.isInput) ? 'Input' : 'Output' }}
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               <span v-if="docType.tag" 
-                    :class="{
-                      'bg-yellow-100 text-yellow-800': docType.tag === 'CU',
-                      'bg-purple-100 text-purple-800': docType.tag === 'avize',
-                      'bg-indigo-100 text-indigo-800': docType.tag === 'studii'
-                    }"
                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
                 {{ docType.tag }}
               </span>
               <span v-else class="text-gray-400 text-xs">-</span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {{ docType.localitate_name || (docType.localitate_id ? `ID: ${docType.localitate_id}` : 'General') }}
+            <!-- localitate_name -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm" :class="docType.localitate ? 'text-gray-900' : 'text-gray-400'">
+              {{ docType.localitate || 'general' }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              <span v-if="docType.followedBy_name" class="text-blue-600">
-                {{ docType.followedBy_name }}
-              </span>
-              <span v-else class="text-gray-400">-</span>
-            </td>
+            <!-- requiredDocs -->
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               <button v-if="docType.requiredDocs && docType.requiredDocs.length > 0" 
                       @click="openRequiredDocsModal(docType)"
@@ -69,14 +59,16 @@
               </button>
               <span v-else class="text-gray-400 text-xs">-</span>
             </td>
+            <!-- minio template actions -->
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <!-- Template actions for output docTypes -->
-              <template v-if="docType.isInput === '0'">
+              <template v-if="!Number(docType.isInput)">
                 <button @click="openUploadModal(docType)"
                         class="text-indigo-600 hover:text-indigo-900 mr-2 text-xs">
                   {{ docType.hasTemplate ? 'Update' : 'Upload' }}
                 </button>
-                <button @click="viewTemplate(docType)"
+                <button v-if="docType.hasTemplate"
+                        @click="viewTemplate(docType)"
                         class="text-green-600 hover:text-green-900 mr-2 text-xs">
                   View
                 </button>
@@ -88,6 +80,7 @@
               </template>
               <span v-else class="text-gray-400 text-xs">N/A</span>
             </td>
+            <!-- edit and delete -->
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <button @click="openEditModal(docType)"
                       class="text-blue-600 hover:text-blue-900 mr-2 text-xs">
@@ -103,14 +96,7 @@
       </table>
     </div>
 
-    <!-- Upload Modal -->
-    <ModalsUploadFile 
-      v-if="uploadModal.show" 
-      :singleFile="true" 
-      :fileName="uploadModal.docType?.name"
-      @close="closeUploadModal" 
-      @upload="handleTemplateUpload" 
-    />
+    
 
     <!-- Template Viewer Modal -->
     <ModalsFile
@@ -119,187 +105,52 @@
       @close="closeViewModal"
     />
 
+
     <!-- Required Docs Viewer Modal -->
     <DevRequiredDocsViewer
-      :show="requiredDocsModal.show"
-      :docType="requiredDocsModal.docType"
+      v-if="requiredDocsModal.show"
       :requiredDocs="requiredDocsModal.docType?.requiredDocs"
       @close="closeRequiredDocsModal"
     />
 
-    <!-- Edit DocType Modal -->
-    <div v-if="editModal.show" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">
-            {{ editModal.isNew ? 'Add New DocType' : `Edit DocType "${editModal.docType?.name}"` }}
-          </h3>
-          
-          <form @submit.prevent="saveDocType">
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Name
-              </label>
-              <input v-model="editModal.form.name"
-                     type="text"
-                     required
-                     class="block w-full border border-gray-300 rounded px-3 py-2">
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Type
-              </label>
-              <select v-model="editModal.form.isInput"
-                      class="block w-full border border-gray-300 rounded px-3 py-2">
-                <option :value="1">Input Document</option>
-                <option :value="0">Output Document</option>
-              </select>
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Tag (optional)
-              </label>
-              <select v-model="editModal.form.tag"
-                      class="block w-full border border-gray-300 rounded px-3 py-2">
-                <option :value="null">None</option>
-                <option value="CU">CU (Construction Permit)</option>
-                <option value="avize">Avize (Approvals)</option>
-                <option value="studii">Studii (Studies)</option>
-              </select>
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Location (optional)
-              </label>
-              <select v-model="editModal.form.localitate_id"
-                      class="block w-full border border-gray-300 rounded px-3 py-2">
-                <option :value="null">General (all locations)</option>
-                <option value="155243">Timișoara</option>
-                <option value="155289">Ghiroda</option>
-                <option value="155314">Giroc</option>
-              </select>
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Followed By (for requests)
-              </label>
-              <div class="flex items-center space-x-2">
-                <div class="flex-1">
-                  <input v-model="editModal.followedByName" 
-                         type="text" 
-                         readonly 
-                         placeholder="None selected"
-                         class="block w-full border border-gray-300 rounded px-3 py-2 bg-gray-50 text-gray-700">
-                </div>
-                <button type="button" 
-                        @click="openFollowedBySelector"
-                        class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-                  {{ editModal.form.followedBy ? 'Change' : 'Select' }}
-                </button>
-                <button v-if="editModal.form.followedBy" 
-                        type="button" 
-                        @click="clearFollowedBy"
-                        class="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm">
-                  Clear
-                </button>
-              </div>
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Is Null (optional document)
-              </label>
-              <select v-model="editModal.form.isNull"
-                      class="block w-full border border-gray-300 rounded px-3 py-2">
-                <option :value="0">No</option>
-                <option :value="1">Yes</option>
-              </select>
-            </div>
-
-            <div v-if="editModal.form.followedBy" class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Required Documents Package
-              </label>
-              <div class="flex items-center space-x-2">
-                <div class="flex-1">
-                  <input :value="editModal.requiredDocsText" 
-                         type="text" 
-                         readonly 
-                         placeholder="No documents selected"
-                         class="block w-full border border-gray-300 rounded px-3 py-2 bg-gray-50 text-gray-700">
-                </div>
-                <button type="button" 
-                        @click="openRequiredDocsSelector"
-                        class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-                  {{ editModal.form.requiredDocs.length > 0 ? 'Change' : 'Select' }}
-                </button>
-                <button v-if="editModal.form.requiredDocs.length > 0" 
-                        type="button" 
-                        @click="clearRequiredDocs"
-                        class="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm">
-                  Clear
-                </button>
-              </div>
-            </div>
-
-            <!-- PDF Upload for new OUTPUT docTypes only -->
-            <div v-if="editModal.isNew && editModal.form.isInput === 0" class="mb-6">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Template PDF <span class="text-red-500">*</span>
-              </label>
-              <input type="file"
-                     ref="pdfInput"
-                     @change="handlePdfSelect"
-                     accept=".pdf,application/pdf"
-                     required
-                     class="block w-full border border-gray-300 rounded px-3 py-2">
-              <p class="text-sm text-gray-500 mt-1">Only PDF files are accepted for output documents</p>
-              <p v-if="editModal.fileError" class="text-sm text-red-500 mt-1">{{ editModal.fileError }}</p>
-            </div>
-            
-            <div class="flex items-center justify-end space-x-4">
-              <button type="button" @click="closeEditModal" 
-                      class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
-                Cancel
-              </button>
-              <button type="submit" 
-                      :disabled="editModal.saving"
-                      class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
-                {{ editModal.saving ? 'Saving...' : (editModal.isNew ? 'Create' : 'Save') }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- DocType Selector Modals -->
-    <DevDocTypeSelector
-      :show="followedByModal.show"
-      title="Select Followed By DocType"
-      :docTypes="docTypes"
-      :excludeIds="[editModal.docType?.id].filter(Boolean)"
-      :initialSelection="followedByModal.selected"
-      @close="closeFollowedByModal"
-      @select="onFollowedBySelected"
+    <!-- Upload File Modal -->
+    <ModalsUploadFile 
+      v-if="uploadModal.show" 
+      :singleFile="true" 
+      :fileName="uploadModal.docType?.name"
+      @close="closeUploadModal" 
+      @upload="handleTemplateUpload" 
     />
 
-    
+    <!-- Edit DocType Modal -->
+    <DevDocTypeEditModal
+      v-if="editModal.show"
+      :docType="editModal.docType"
+      :isNew="editModal.isNew"
+      :form="editModal.form"
+      :selectedFile="editModal.selectedFile"
+      :fileError="editModal.fileError"
+      :saving="editModal.saving"
+      :requiredDocsText="editModal.requiredDocsText"
+      @close="editModal.show = false"
+      @save="saveDocType"
+      @openRequiredDocsSelector="openRequiredDocsSelector"
+      @pdfSelect="handlePdfSelect"
+      @clearRequiredDocs="clearRequiredDocs"
+      @update:form="editModal.form = $event"
+    />
+
+    <!-- DocType Selector Modal for Required Docs -->
     <DevDocTypeSelector
       :show="requiredDocsSelector.show"
       title="Select Required Documents"
       :docTypes="docTypes"
-      :excludeIds="[editModal.form.followedBy].filter(Boolean)"
-      
       multiple
       :initialSelection="requiredDocsSelector.selected"
       @close="closeRequiredDocsSelector"
       @select="onRequiredDocsSelected"
     />
+
   </div>
 </template>
 
@@ -315,10 +166,6 @@ const { error, success } = useUI()
 // Data
 const loading = ref(true)
 const docTypes = ref([])
-
-// Computed properties for filtering docTypes
-const inputDocTypes = computed(() => docTypes.value.filter(dt => dt.isInput === '1'))
-const outputDocTypes = computed(() => docTypes.value.filter(dt => dt.isInput === '0'))
 
 // Upload modal state
 const uploadModal = reactive({
@@ -352,60 +199,26 @@ const editModal = reactive({
     isNull: 0,
     tag: null,
     localitate_id: null,
-    followedBy: null,
     requiredDocs: []
   },
   selectedFile: null,
   fileError: null,
   saving: false,
-  followedByName: '',
   requiredDocsText: ''
 })
 
 // DocType selector modals state
-const followedByModal = reactive({
-  show: false,
-  selected: null
-})
-
 const requiredDocsSelector = reactive({
   show: false,
   selected: []
 })
 
-/**
- * Handle PDF file selection and validation
- */
-function handlePdfSelect(event) {
-  const file = event.target.files[0]
-  editModal.fileError = null
-  editModal.selectedFile = null
-  
-  if (!file) return
-  
-  // Validate file type
-  if (file.type !== 'application/pdf') {
-    editModal.fileError = 'Only PDF files are allowed'
-    event.target.value = '' // Clear the input
-    return
-  }
-  
-  // Validate file size (optional - 50MB limit)
-  const maxSize = 50 * 1024 * 1024 // 50MB
-  if (file.size > maxSize) {
-    editModal.fileError = 'File size must be less than 50MB'
-    event.target.value = '' // Clear the input
-    return
-  }
-  
-  editModal.selectedFile = file
-  console.log('PDF file selected:', file.name, file.type, file.size)
-}
+
 
 /**
  * Check if template exists in MinIO for a docType
  */
-async function checkTemplateExists(docType) {
+async function checkMinioTpl(docType) {
   try {
     const locationPath = docType.localitate_id || 'general'
     const templatePath = `${locationPath}/${docType.id}`
@@ -440,113 +253,88 @@ async function checkTemplateExists(docType) {
 async function fetchDocTypes() {
   try {
     loading.value = true
-    const response = await fetch(`${dbApi}/data/docTypes?include=localitate_id,followedBy`)
+    const response = await fetch(`${dbApi}/data/docTypes?include=localitate_id`)
     
     if (!response.ok) {
       throw new Error('Failed to fetch docTypes')
     }
     
     const data = await response.json()
+
+    console.log("data")
+    console.log(data)
+    // return
     
     // Process docTypes with relationships
-    docTypes.value = await Promise.all(data.data.map(async (doc) => {
+    docTypes.value = await Promise.all(data.data.map(async doc => {
       const docType = {
         ...doc.attributes,
-        // Extract localitate from relationships
         localitate_id: doc.relationships.localitate_id?.data?.id || null,
-        // Extract followedBy from relationships
-        followedBy: doc.relationships.followedBy?.data?.id || null
+        localitate: data.includes?.find(obj => obj.id === doc.relationships.localitate_id?.data?.id)?.attributes?.denumire || null,
       }
-      
-      // If localitate is included, find the name
-      if (docType.localitate_id && data.includes) {
-        const localitate = data.includes.find(inc => 
-          inc.type === 'localitati' && inc.id === docType.localitate_id
-        )
-        if (localitate) {
-          docType.localitate_name = localitate.attributes.denumire
-        }
-      }
-      
-      // If followedBy is included, find the name
-      if (docType.followedBy && data.includes) {
-        const followedByDoc = data.includes.find(inc => 
-          inc.type === 'docTypes' && inc.id === docType.followedBy
-        )
-        if (followedByDoc) {
-          docType.followedBy_name = followedByDoc.attributes.name
-        }
-      }
-      
-      // Check if template exists for output documents only
-      if (docType.isInput === '0') {
-        docType.hasTemplate = await checkTemplateExists(docType)
-      } else {
-        docType.hasTemplate = null // No template status for input documents
-      }
-      
+
+      docType.hasTemplate = (!Number(doc.attributes.isInput)) ? checkMinioTpl(docType) : null;
+
+      docType.requiredDocs = await fetch(`${dbApi}/data/doc_packages?include=adjacent&filter=main=${docType.id}`)
+      .then(res => res.json())
+      .then(data => {
+        console.log("pkg data")
+        console.log(data)
+        return data.includes?.map(include => {
+          return {
+            id: include.id,
+            name: include.attributes.name
+          }
+        }) || []
+      })
+      .catch(err => console.error('Error fetching doc packages:', err))
+
+      console.log("docType")
+      console.log(docType)
+      // return
+
       return docType
     }))
     
-    // Fetch required documents for each docType
-    await fetchRequiredDocs()
-    
   } catch (err) {
     console.error('Error fetching docTypes:', err)
-    error.value.title = 'Error'
     error.value.message = 'Failed to load docTypes'
   } finally {
     loading.value = false
   }
 }
 
+
 /**
- * Fetch required documents packages for all docTypes
+ * Handle PDF file selection and validation
  */
-async function fetchRequiredDocs() {
-  try {
-    const response = await fetch(`${dbApi}/data/doc_packages`)
-    
-    if (!response.ok) {
-      console.warn('Could not fetch doc packages')
-      return
-    }
-    
-    const data = await response.json()
-    
-    // Group packages by main docType
-    const packagesByMain = {}
-    data.data.forEach(pkg => {
-      // Extract IDs from relationships (JSON:API format)
-      const mainId = pkg.relationships.main?.data?.id
-      const adjacentId = pkg.relationships.adjacent?.data?.id
-      
-      if (!mainId || !adjacentId) return
-      
-      if (!packagesByMain[mainId]) {
-        packagesByMain[mainId] = []
-      }
-      
-      // Find the adjacent docType in our docTypes array to get the name
-      const adjacentDocType = docTypes.value.find(dt => dt.id == adjacentId)
-      
-      if (adjacentDocType) {
-        packagesByMain[mainId].push({
-          id: adjacentId,
-          name: adjacentDocType.name
-        })
-      }
-    })
-    
-    // Add required docs to docTypes
-    docTypes.value.forEach(docType => {
-      docType.requiredDocs = packagesByMain[docType.id] || []
-    })
-    
-  } catch (err) {
-    console.warn('Error fetching required docs:', err)
+function handlePdfSelect(event) {
+  const file = event.target.files[0]
+  editModal.fileError = null
+  editModal.selectedFile = null
+  
+  if (!file) return
+  
+  // Validate file type
+  if (file.type !== 'application/pdf') {
+    editModal.fileError = 'Only PDF files are allowed'
+    event.target.value = '' // Clear the input
+    return
   }
+  
+  // Validate file size (optional - 50MB limit)
+  const maxSize = 50 * 1024 * 1024 // 50MB
+  if (file.size > maxSize) {
+    editModal.fileError = 'File size must be less than 50MB'
+    event.target.value = '' // Clear the input
+    return
+  }
+  
+  editModal.selectedFile = file
+  console.log('PDF file selected:', file.name, file.type, file.size)
 }
+
+
 
 /**
  * Open upload modal for a docType
@@ -674,43 +462,6 @@ function closeRequiredDocsModal() {
   requiredDocsModal.docType = null
 }
 
-/**
- * Open followed by selector modal
- */
-function openFollowedBySelector() {
-  followedByModal.selected = editModal.form.followedBy ? 
-    docTypes.value.find(dt => dt.id === editModal.form.followedBy) : null
-  followedByModal.show = true
-}
-
-/**
- * Close followed by selector modal
- */
-function closeFollowedByModal() {
-  followedByModal.show = false
-  followedByModal.selected = null
-}
-
-/**
- * Handle followed by selection
- */
-function onFollowedBySelected(selectedDocType) {
-  if (selectedDocType) {
-    editModal.form.followedBy = selectedDocType.id
-    editModal.followedByName = selectedDocType.name
-  }
-  closeFollowedByModal()
-}
-
-/**
- * Clear followed by selection
- */
-function clearFollowedBy() {
-  editModal.form.followedBy = null
-  editModal.followedByName = ''
-  editModal.form.requiredDocs = []
-  editModal.requiredDocsText = ''
-}
 
 /**
  * Open required docs selector modal
@@ -763,13 +514,11 @@ function openAddModal() {
     isNull: 0,
     tag: null,
     localitate_id: null,
-    followedBy: null,
     requiredDocs: []
   }
   editModal.selectedFile = null
   editModal.fileError = null
   editModal.saving = false
-  editModal.followedByName = ''
   editModal.requiredDocsText = ''
 }
 
@@ -785,39 +534,15 @@ function openEditModal(docType) {
   editModal.form.isNull = parseInt(docType.isNull)
   editModal.form.tag = docType.tag
   editModal.form.localitate_id = docType.localitate_id
-  editModal.form.followedBy = docType.followedBy
   editModal.form.requiredDocs = docType.requiredDocs ? docType.requiredDocs.map(rd => rd.id) : []
   editModal.saving = false
   
   // Set display names
-  editModal.followedByName = docType.followedBy_name || ''
   editModal.requiredDocsText = docType.requiredDocs && docType.requiredDocs.length > 0 ?
     `${docType.requiredDocs.length} document(s): ${docType.requiredDocs.map(rd => rd.name).join(', ')}` :
     ''
 }
 
-/**
- * Close edit modal
- */
-function closeEditModal() {
-  editModal.show = false
-  editModal.docType = null
-  editModal.isNew = false
-  editModal.form = {
-    name: '',
-    isInput: 1,
-    isNull: 0,
-    tag: null,
-    localitate_id: null,
-    followedBy: null,
-    requiredDocs: []
-  }
-  editModal.selectedFile = null
-  editModal.fileError = null
-  editModal.saving = false
-  editModal.followedByName = ''
-  editModal.requiredDocsText = ''
-}
 
 /**
  * Save docType changes or create new docType
@@ -840,8 +565,7 @@ async function saveDocType() {
           isInput: editModal.form.isInput != null ? Number(editModal.form.isInput) : 0,
           isNull: editModal.form.isNull != null ? Number(editModal.form.isNull) : 0,
           tag: editModal.form.tag,
-          localitate_id: editModal.form.localitate_id ? Number(editModal.form.localitate_id) : null,
-          followedBy: editModal.form.followedBy ? Number(editModal.form.followedBy) : null
+          localitate_id: editModal.form.localitate_id ? Number(editModal.form.localitate_id) : null
         }
       }
     }
@@ -926,7 +650,7 @@ async function saveDocType() {
       }
       
       // Save required documents packages if any
-      if (editModal.form.followedBy && editModal.form.requiredDocs.length > 0) {
+      if (editModal.form.requiredDocs.length > 0) {
         await saveRequiredDocsPackages(newDocTypeId, editModal.form.requiredDocs)
       }
       
@@ -934,9 +658,6 @@ async function saveDocType() {
       const newDocType = {
         ...responseData.data.attributes,
         localitate_id: editModal.form.localitate_id,
-        followedBy: editModal.form.followedBy,
-        localitate_name: getLocalitateNameById(editModal.form.localitate_id),
-        followedBy_name: getDocTypeNameById(editModal.form.followedBy),
         hasTemplate: hasTemplate,
         requiredDocs: editModal.form.requiredDocs.map(id => ({
           id,
@@ -953,12 +674,9 @@ async function saveDocType() {
         docTypes.value[docTypeIndex].isNull = editModal.form.isNull
         docTypes.value[docTypeIndex].tag = editModal.form.tag
         docTypes.value[docTypeIndex].localitate_id = editModal.form.localitate_id
-        docTypes.value[docTypeIndex].followedBy = editModal.form.followedBy
-        docTypes.value[docTypeIndex].localitate_name = getLocalitateNameById(editModal.form.localitate_id)
-        docTypes.value[docTypeIndex].followedBy_name = getDocTypeNameById(editModal.form.followedBy)
         
         // Update required docs packages
-        if (editModal.form.followedBy && editModal.form.requiredDocs.length > 0) {
+        if (editModal.form.requiredDocs.length > 0) {
           await saveRequiredDocsPackages(editModal.docType.id, editModal.form.requiredDocs)
         } else {
           await deleteRequiredDocsPackages(editModal.docType.id)
@@ -980,7 +698,6 @@ async function saveDocType() {
     } else {
       success.value.message = 'DocType updated successfully'
     }
-    closeEditModal()
     
   } catch (err) {
     console.error('Save docType error:', err)
@@ -991,15 +708,6 @@ async function saveDocType() {
   }
 }
 
-/**
- * Helper function to get localitate name by ID
- */
-function getLocalitateNameById(id) {
-  if (id === 155243) return 'Timișoara'
-  if (id === 155289) return 'Ghiroda'
-  if (id === 155314) return 'Giroc'
-  return null
-}
 
 /**
  * Helper function to get docType name by ID
