@@ -480,13 +480,11 @@ const saveBasicInfo = async () => {
       throw new Error('Failed to update project')
     }
     
-    success.value.show = true
     success.value.message = 'Project information updated successfully'
     isEditingBasic.value = false
     emit('fetchProject')
   } catch (err) {
     console.error('Failed to update project:', err)
-    error.value.show = true
     error.value.message = 'Failed to update project information'
   }
 }
@@ -547,13 +545,11 @@ const saveMemberChanges = async () => {
       }
     }
     
-    success.value.show = true
     success.value.message = 'Team members updated successfully'
     isEditingMembers.value = false
     fetchProjectMembers() // Refresh member list
   } catch (err) {
     console.error('Failed to update team members:', err)
-    error.value.show = true
     error.value.message = 'Failed to update team members'
   }
 }
@@ -595,13 +591,11 @@ const addClientById = async () => {
       throw new Error('Failed to add client to project')
     }
     
-    success.value.show = true
     success.value.message = 'Client added successfully'
     newClientId.value = ''
     fetchProjectClients() // Refresh client list
   } catch (err) {
     console.error('Failed to add client:', err)
-    error.value.show = true
     error.value.message = 'Failed to add client to project'
   }
 }
@@ -621,12 +615,10 @@ const removeClient = async (clientId) => {
       throw new Error('Failed to remove client from project')
     }
     
-    success.value.show = true
     success.value.message = 'Client removed successfully'
     fetchProjectClients() // Refresh client list
   } catch (err) {
     console.error('Failed to remove client:', err)
-    error.value.show = true
     error.value.message = 'Failed to remove client from project'
   }
 }

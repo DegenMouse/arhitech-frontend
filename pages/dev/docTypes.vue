@@ -493,7 +493,6 @@ async function fetchDocTypes() {
     
   } catch (err) {
     console.error('Error fetching docTypes:', err)
-    error.value.show = true
     error.value.title = 'Error'
     error.value.message = 'Failed to load docTypes'
   } finally {
@@ -597,13 +596,11 @@ async function handleTemplateUpload(file) {
       docTypes.value[docTypeIndex].hasTemplate = true
     }
     
-    success.value.show = true
     success.value.message = 'Template uploaded successfully'
     uploadModal.show = false
     
   } catch (err) {
     console.error('Upload error:', err)
-    error.value.show = true
     error.value.title = 'Upload Failed'
     error.value.message = err.message
   }
@@ -646,7 +643,6 @@ async function viewTemplate(docType) {
     
   } catch (err) {
     console.error('View template error:', err)
-    error.value.show = true
     error.value.title = 'Error'
     error.value.message = 'Failed to load template'
     viewModal.show = false
@@ -975,7 +971,6 @@ async function saveDocType() {
       }
     }
     
-    success.value.show = true
     if (editModal.isNew) {
       if (editModal.form.isInput === 0 && editModal.selectedFile) {
         success.value.message = 'DocType created and template uploaded successfully'
@@ -989,7 +984,6 @@ async function saveDocType() {
     
   } catch (err) {
     console.error('Save docType error:', err)
-    error.value.show = true
     error.value.title = `${editModal.isNew ? 'Create' : 'Save'} Failed`
     error.value.message = err.message
   } finally {
@@ -1136,12 +1130,10 @@ async function removeTemplate(docType) {
       docTypes.value[docTypeIndex].hasTemplate = false
     }
     
-    success.value.show = true
     success.value.message = 'Template removed successfully'
     
   } catch (err) {
     console.error('Remove template error:', err)
-    error.value.show = true
     error.value.title = 'Remove Failed'
     error.value.message = err.message
   }
@@ -1172,12 +1164,10 @@ async function deleteDocType(docType) {
       docTypes.value.splice(docTypeIndex, 1)
     }
     
-    success.value.show = true
     success.value.message = `DocType "${docType.name}" deleted successfully`
     
   } catch (err) {
     console.error('Delete docType error:', err)
-    error.value.show = true
     error.value.title = 'Delete Failed'
     error.value.message = err.message
   }

@@ -87,7 +87,6 @@ const handleJoinCompany = async (companyCode) => {
     if(!res.ok){
       error.value.title = 'Failed to Join Company'
       error.value.message = 'Invalid company code or server error'
-      error.value.show = true
       throw new Error('Invalid company code or server error.value')
     }
     return res.json()
@@ -99,12 +98,10 @@ const handleJoinCompany = async (companyCode) => {
       console.error.value(err)
       error.value.title = 'Error retrieving company'
       error.value.message = "This error.value might resolve with a page reload"
-      error.value.show = true
     })
   }).catch(err => {
     error.value.title = 'Error'
     error.value.message = err.message
-    error.value.show = true
     console.error.value(err)
   })
 
@@ -136,7 +133,6 @@ const handleCreateCompany = async (companyData) => {
     if(!res.ok){
       error.value.title = 'Failed to Create Company'
       error.value.message = 'Invalid company data or server error.value'
-      error.value.show = true
       throw new Error('Invalid company data or server error.value')
     }
   }).then(() => {
@@ -147,12 +143,10 @@ const handleCreateCompany = async (companyData) => {
       console.error.value(err)
       error.value.title = 'Error retrieving company'
       error.value.message = "This error.value might resolve with a page reload"
-      error.value.show = true
     })
   }).catch(err => {
     error.value.title = 'Error'
     error.value.message = err.message
-    error.value.show = true
     console.error.value(err)
   })
   showCreateModal.value = false

@@ -368,7 +368,6 @@ async function docUpload(file, docId) {
 
   // Show success message if upload completed
   if(ok){
-    success.value.show = true
     success.value.message = "Document uploaded successfully"
   }
 }
