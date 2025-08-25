@@ -150,7 +150,6 @@ onMounted(async () => {
   }catch(err){
     console.error('Failed to fetch members or projects:', err)
     error.value.message = 'Unable to load members AND/OR projects. Please check your internet connection and try again.'
-    error.value.show = true
   }
 })
 
@@ -169,7 +168,6 @@ const handleLeaveCompany = async () => {
   }catch(err){
     console.error('Failed to leave company:', err)
     error.value.message = 'Unable to leave company. Please check your internet connection and try again.'
-    error.value.show = true
   }
 }
 
@@ -268,11 +266,9 @@ const handleRemoveMember = async (memberId) => {
       members.value.splice(index, 1)
     }
     success.value.message = 'Member removed successfully'
-    success.value.show = true
   }catch(err){
     console.error('Failed to remove member:', err)
     error.value.message = 'Unable to remove member. Please try again.'
-    error.value.show = true
   }
 }
 

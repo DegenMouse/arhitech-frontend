@@ -118,7 +118,6 @@ const handleLeaveCompany = async () => {
   }catch(err){
     console.error('Failed to leave company:', err)
     error.value.message = 'Unable to leave company. Please check your internet connection and try again.'
-    error.value.show = true
   }
 }
 

@@ -2,7 +2,7 @@
   <div class="p-8">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-3xl font-bold">DocTypes Management</h1>
-      <button @click="openAddModal" 
+      <button @click="addDocType" 
               class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
         + Add New DocType
       </button>
@@ -23,6 +23,7 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tag</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Required Docs</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Template Actions</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Manage</th>
           </tr>
@@ -33,35 +34,41 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ docType.id }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ docType.name }}</td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <span :class="docType.isInput === '1' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'" 
+              <span :class="Number(docType.isInput) ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'" 
                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                {{ docType.isInput === '1' ? 'Input' : 'Output' }}
+                {{ Number(docType.isInput) ? 'Input' : 'Output' }}
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               <span v-if="docType.tag" 
-                    :class="{
-                      'bg-yellow-100 text-yellow-800': docType.tag === 'CU',
-                      'bg-purple-100 text-purple-800': docType.tag === 'avize',
-                      'bg-indigo-100 text-indigo-800': docType.tag === 'studii',
-                      'bg-red-100 text-red-800': docType.tag === 'needed'
-                    }"
                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
                 {{ docType.tag }}
               </span>
               <span v-else class="text-gray-400 text-xs">-</span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {{ docType.localitate_name || (docType.localitate_id ? `ID: ${docType.localitate_id}` : 'General') }}
+            <!-- localitate_name -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm" :class="docType.localitate ? 'text-gray-900' : 'text-gray-400'">
+              {{ docType.localitate || 'general' }}
             </td>
+            <!-- requiredDocs -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <button v-if="docType.requiredDocs && docType.requiredDocs.length > 0" 
+                      @click="requiredDocsModal.show = true; requiredDocsModal.docType = docType"
+                      class="text-blue-600 hover:text-blue-900 text-xs">
+                View ({{ docType.requiredDocs.length }})
+              </button>
+              <span v-else class="text-gray-400 text-xs">-</span>
+            </td>
+            <!-- minio template actions -->
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <!-- Template actions for output docTypes -->
-              <template v-if="docType.isInput === '0'">
-                <button @click="openUploadModal(docType)"
+              <template v-if="!Number(docType.isInput)">
+                <button @click="uploadTplModal.show = true; uploadTplModal.docType = docType"
                         class="text-indigo-600 hover:text-indigo-900 mr-2 text-xs">
                   {{ docType.hasTemplate ? 'Update' : 'Upload' }}
                 </button>
-                <button @click="viewTemplate(docType)"
+                <button v-if="docType.hasTemplate"
+                        @click="viewTemplate(docType)"
                         class="text-green-600 hover:text-green-900 mr-2 text-xs">
                   View
                 </button>
@@ -73,8 +80,9 @@
               </template>
               <span v-else class="text-gray-400 text-xs">N/A</span>
             </td>
+            <!-- edit and delete -->
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <button @click="openEditModal(docType)"
+              <button @click="editDocType(docType)"
                       class="text-blue-600 hover:text-blue-900 mr-2 text-xs">
                 Edit
               </button>
@@ -88,123 +96,41 @@
       </table>
     </div>
 
-    <!-- Upload Modal -->
-    <ModalsUploadFile 
-      v-if="uploadModal.show" 
-      :singleFile="true" 
-      :fileName="uploadModal.docType?.name"
-      @close="closeUploadModal" 
-      @upload="handleTemplateUpload" 
-    />
+    
 
     <!-- Template Viewer Modal -->
     <ModalsFile
-      v-if="viewModal.show"
-      :url="viewModal.url"
-      @close="closeViewModal"
+      v-if="viewTplModal.show"
+      :url="viewTplModal.url"
+      @close="viewTplModal.show = false"
     />
 
+    <!-- Required Docs Viewer Modal -->
+    <DevRequiredDocsViewer
+      v-if="requiredDocsModal.show"
+      :requiredDocs="requiredDocsModal.docType?.requiredDocs"
+      @close="requiredDocsModal.show = false"
+    />
+
+    <!-- Upload File Modal -->
+    <ModalsUploadFile 
+      v-if="uploadTplModal.show" 
+      :singleFile="true" 
+      :fileName="uploadTplModal.docType?.name"
+      @close="uploadTplModal.show = false" 
+      @upload="handleTemplateUpload" 
+    />
 
     <!-- Edit DocType Modal -->
-    <div v-if="editModal.show" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">
-            {{ editModal.isNew ? 'Add New DocType' : `Edit DocType "${editModal.docType?.name}"` }}
-          </h3>
-          
-          <form @submit.prevent="saveDocType">
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Name
-              </label>
-              <input v-model="editModal.form.name"
-                     type="text"
-                     required
-                     class="block w-full border border-gray-300 rounded px-3 py-2">
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Type
-              </label>
-              <select v-model="editModal.form.isInput"
-                      class="block w-full border border-gray-300 rounded px-3 py-2">
-                <option :value="1">Input Document</option>
-                <option :value="0">Output Document</option>
-              </select>
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Tag (optional)
-              </label>
-              <select v-model="editModal.form.tag"
-                      class="block w-full border border-gray-300 rounded px-3 py-2">
-                <option :value="null">None</option>
-                <option value="CU">CU (Construction Permit)</option>
-                <option value="avize">Avize (Approvals)</option>
-                <option value="studii">Studii (Studies)</option>
-                <option value="needed">Needed (Required Document)</option>
-              </select>
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Location (optional)
-              </label>
-              <select v-model="editModal.form.localitate_id"
-                      class="block w-full border border-gray-300 rounded px-3 py-2">
-                <option :value="null">General (all locations)</option>
-                <option value="155243">Timișoara</option>
-                <option value="155289">Ghiroda</option>
-                <option value="155314">Giroc</option>
-              </select>
-            </div>
-
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Is Null (optional document)
-              </label>
-              <select v-model="editModal.form.isNull"
-                      class="block w-full border border-gray-300 rounded px-3 py-2">
-                <option :value="0">No</option>
-                <option :value="1">Yes</option>
-              </select>
-            </div>
-
-
-            <!-- PDF Upload for new OUTPUT docTypes only -->
-            <div v-if="editModal.isNew && editModal.form.isInput === 0" class="mb-6">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Template PDF <span class="text-red-500">*</span>
-              </label>
-              <input type="file"
-                     ref="pdfInput"
-                     @change="handlePdfSelect"
-                     accept=".pdf,application/pdf"
-                     required
-                     class="block w-full border border-gray-300 rounded px-3 py-2">
-              <p class="text-sm text-gray-500 mt-1">Only PDF files are accepted for output documents</p>
-              <p v-if="editModal.fileError" class="text-sm text-red-500 mt-1">{{ editModal.fileError }}</p>
-            </div>
-            
-            <div class="flex items-center justify-end space-x-4">
-              <button type="button" @click="closeEditModal" 
-                      class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
-                Cancel
-              </button>
-              <button type="submit" 
-                      :disabled="editModal.saving"
-                      class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
-                {{ editModal.saving ? 'Saving...' : (editModal.isNew ? 'Create' : 'Save') }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+    <DevDocTypeEditModal
+      v-if="editModal.show"
+      :isNew="editModal.isNew"
+      :form="editModal.form"
+      :saving="editModal.saving"
+      :docTypes="docTypes"
+      @close="editModal.show = false"
+      @save="saveDocType"
+    />
 
   </div>
 </template>
@@ -222,17 +148,15 @@ const { error, success } = useUI()
 const loading = ref(true)
 const docTypes = ref([])
 
-
 // Upload modal state
-const uploadModal = reactive({
+const uploadTplModal = reactive({
   show: false,
   docType: null,
-  selectedFile: null,
   uploading: false
 })
 
 // View modal state  
-const viewModal = reactive({
+const viewTplModal = reactive({
   show: false,
   docType: null,
   url: null
@@ -247,49 +171,19 @@ const editModal = reactive({
   form: {
     name: '',
     isInput: 1,
-    isNull: 0,
     tag: null,
-    localitate_id: null
+    localitate_id: null,
+    requiredDocs: []
   },
-  selectedFile: null,
-  fileError: null,
   saving: false
 })
 
 
-/**
- * Handle PDF file selection and validation
- */
-function handlePdfSelect(event) {
-  const file = event.target.files[0]
-  editModal.fileError = null
-  editModal.selectedFile = null
-  
-  if (!file) return
-  
-  // Validate file type
-  if (file.type !== 'application/pdf') {
-    editModal.fileError = 'Only PDF files are allowed'
-    event.target.value = '' // Clear the input
-    return
-  }
-  
-  // Validate file size (optional - 50MB limit)
-  const maxSize = 50 * 1024 * 1024 // 50MB
-  if (file.size > maxSize) {
-    editModal.fileError = 'File size must be less than 50MB'
-    event.target.value = '' // Clear the input
-    return
-  }
-  
-  editModal.selectedFile = file
-  console.log('PDF file selected:', file.name, file.type, file.size)
-}
 
 /**
  * Check if template exists in MinIO for a docType
  */
-async function checkTemplateExists(docType) {
+async function checkMinioTpl(docType) {
   try {
     const locationPath = docType.localitate_id || 'general'
     const templatePath = `${locationPath}/${docType.id}`
@@ -324,39 +218,51 @@ async function checkTemplateExists(docType) {
 async function fetchDocTypes() {
   try {
     loading.value = true
-    const response = await fetch(`${dbApi}/data/docTypes`)
+    const response = await fetch(`${dbApi}/data/docTypes?include=localitate_id`)
     
     if (!response.ok) {
       throw new Error('Failed to fetch docTypes')
     }
     
     const data = await response.json()
+
+    console.log("data")
+    console.log(data)
+    // return
     
-    // Process docTypes 
-    docTypes.value = await Promise.all(data.data.map(async (doc) => {
+    // Process docTypes with relationships
+    docTypes.value = await Promise.all(data.data.map(async doc => {
       const docType = {
         ...doc.attributes,
-        // Extract localitate_id from relationships if it exists
-        localitate_id: doc.relationships?.localitate_id?.data?.id || doc.attributes.localitate_id || null,
-        // Set localitate name using helper function
-        localitate_name: getLocalitateNameById(doc.relationships?.localitate_id?.data?.id || doc.attributes.localitate_id)
+        localitate_id: doc.relationships.localitate_id?.data?.id || null,
+        localitate: data.includes?.find(obj => obj.id === doc.relationships.localitate_id?.data?.id)?.attributes?.denumire || null,
       }
-      
-      // Check if template exists for output documents only
-      if (docType.isInput === '0') {
-        docType.hasTemplate = await checkTemplateExists(docType)
-      } else {
-        docType.hasTemplate = null // No template status for input documents
-      }
-      
+
+      docType.hasTemplate = (!Number(doc.attributes.isInput)) ? checkMinioTpl(docType) : null;
+
+      docType.requiredDocs = await fetch(`${dbApi}/data/doc_packages?include=adjacent&filter=main=${docType.id}`)
+      .then(res => res.json())
+      .then(data => {
+        // console.log("pkg data")
+        // console.log(data)
+        return data.includes?.map(include => {
+          return {
+            id: include.id,
+            name: include.attributes.name
+          }
+        }) || []
+      })
+      .catch(err => console.error('Error fetching doc packages:', err))
+
+      // console.log("docType")
+      // console.log(docType)
+      // return
+
       return docType
     }))
     
-    
   } catch (err) {
     console.error('Error fetching docTypes:', err)
-    error.value.show = true
-    error.value.title = 'Error'
     error.value.message = 'Failed to load docTypes'
   } finally {
     loading.value = false
@@ -365,30 +271,23 @@ async function fetchDocTypes() {
 
 
 /**
- * Open upload modal for a docType
- */
-function openUploadModal(docType) {
-  uploadModal.show = true
-  uploadModal.docType = docType
-  uploadModal.selectedFile = null
-  uploadModal.uploading = false
-}
-
-/**
  * Handle template upload from ModalsUploadFile
  */
-async function handleTemplateUpload(file) {
-  if (!uploadModal.docType || !file) return
+async function handleTemplateUpload(file, path = null) {
+  // if (!uploadTplModal.docType || !file) return
   
   try {
-    const docType = uploadModal.docType
     
-    // Determine template path based on location
-    const locationPath = docType.localitate_id || 'general'
-    const templatePath = `${locationPath}/${docType.id}`
+    if (!path) {
+      const locationPath = uploadTplModal.docType.localitate_id || 'general'
+      path = `${locationPath}/${uploadTplModal.docType.id}`
+    }
+
+    console.log("templatePath")
+    console.log(path)
     
     // Get presigned URL for templates bucket
-    const minioResponse = await fetch(`/api/minio-put?path=${encodeURIComponent(templatePath)}&bucket=templates`)
+    const minioResponse = await fetch(`/api/minio-put?path=${encodeURIComponent(path)}&bucket=templates`)
     
     if (!minioResponse.ok) {
       throw new Error('Failed to get upload URL')
@@ -407,31 +306,18 @@ async function handleTemplateUpload(file) {
     }
     
     // Update local state - template now exists
-    const docTypeIndex = docTypes.value.findIndex(dt => dt.id === docType.id)
+    const docTypeIndex = docTypes.value.findIndex(dt => dt.id === uploadTplModal.docType?.id)
     if (docTypeIndex !== -1) {
       docTypes.value[docTypeIndex].hasTemplate = true
     }
     
-    success.value.show = true
     success.value.message = 'Template uploaded successfully'
-    uploadModal.show = false
     
   } catch (err) {
     console.error('Upload error:', err)
-    error.value.show = true
     error.value.title = 'Upload Failed'
     error.value.message = err.message
   }
-}
-
-/**
- * Close upload modal and reset state
- */
-function closeUploadModal() {
-  uploadModal.show = false
-  uploadModal.docType = null
-  uploadModal.selectedFile = null
-  uploadModal.uploading = false
 }
 
 /**
@@ -441,9 +327,9 @@ async function viewTemplate(docType) {
   if (!docType.hasTemplate) return
   
   try {
-    viewModal.show = true
-    viewModal.docType = docType
-    viewModal.url = null
+    viewTplModal.show = true
+    viewTplModal.docType = docType
+    viewTplModal.url = null
     
     // Build template path
     const locationPath = docType.localitate_id || 'general'
@@ -457,248 +343,20 @@ async function viewTemplate(docType) {
     }
     
     const { url } = await response.json()
-    viewModal.url = url
+    viewTplModal.url = url
     
   } catch (err) {
     console.error('View template error:', err)
-    error.value.show = true
     error.value.title = 'Error'
     error.value.message = 'Failed to load template'
-    viewModal.show = false
+    viewTplModal.show = false
   }
 }
-
-/**
- * Close view modal
- */
-function closeViewModal() {
-  viewModal.show = false
-  viewModal.docType = null
-  viewModal.url = null
-}
-
-
-
-
-/**
- * Open add modal for new docType
- */
-function openAddModal() {
-  editModal.show = true
-  editModal.docType = null
-  editModal.isNew = true
-  editModal.form = {
-    name: '',
-    isInput: 1,
-    isNull: 0,
-    tag: null,
-    localitate_id: null
-  }
-  editModal.selectedFile = null
-  editModal.fileError = null
-  editModal.saving = false
-}
-
-/**
- * Open edit modal for existing docType
- */
-function openEditModal(docType) {
-  editModal.show = true
-  editModal.docType = docType
-  editModal.isNew = false
-  editModal.form.name = docType.name
-  editModal.form.isInput = parseInt(docType.isInput)
-  editModal.form.isNull = parseInt(docType.isNull)
-  editModal.form.tag = docType.tag
-  editModal.form.localitate_id = docType.localitate_id
-  editModal.saving = false
-}
-
-/**
- * Close edit modal
- */
-function closeEditModal() {
-  editModal.show = false
-  editModal.docType = null
-  editModal.isNew = false
-  editModal.form = {
-    name: '',
-    isInput: 1,
-    isNull: 0,
-    tag: null,
-    localitate_id: null
-  }
-  editModal.selectedFile = null
-  editModal.fileError = null
-  editModal.saving = false
-}
-
-/**
- * Save docType changes or create new docType
- */
-async function saveDocType() {
-  try {
-    editModal.saving = true
-    
-    // For new OUTPUT docTypes, validate that a PDF file is selected
-    if (editModal.isNew && editModal.form.isInput === 0 && !editModal.selectedFile) {
-      editModal.fileError = 'PDF template file is required for output documents'
-      editModal.saving = false
-      return
-    }
-    
-    const requestBody = {
-      data: {
-        attributes: {
-          name: editModal.form.name,
-          isInput: editModal.form.isInput != null ? Number(editModal.form.isInput) : 0,
-          isNull: editModal.form.isNull != null ? Number(editModal.form.isNull) : 0,
-          tag: editModal.form.tag,
-          localitate_id: editModal.form.localitate_id ? Number(editModal.form.localitate_id) : null
-        }
-      }
-    }
-    
-    console.log('Form values before conversion:', {
-      isInput: editModal.form.isInput,
-      isNull: editModal.form.isNull,
-      isInputType: typeof editModal.form.isInput,
-      isNullType: typeof editModal.form.isNull
-    })
-    console.log('Creating docType with body:', JSON.stringify(requestBody, null, 2))
-    
-    let response
-    if (editModal.isNew) {
-      // Create new docType
-      response = await fetch(`${dbApi}/data/docTypes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      })
-    } else {
-      // Update existing docType
-      requestBody.data.id = editModal.docType.id
-      response = await fetch(`${dbApi}/data/docTypes/${editModal.docType.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      })
-    }
-    
-    console.log('Response status:', response.status)
-    console.log('Response ok:', response.ok)
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.log('Error response:', errorText)
-      throw new Error(`Failed to ${editModal.isNew ? 'create' : 'update'} docType: ${response.status} ${errorText}`)
-    }
-    
-    const responseData = await response.json()
-    console.log('Success response:', responseData)
-    
-    if (editModal.isNew) {
-      const newDocTypeId = responseData.data.id
-      let hasTemplate = null
-      
-      // Only upload template for OUTPUT docTypes
-      if (editModal.form.isInput === 0 && editModal.selectedFile) {
-        const locationPath = editModal.form.localitate_id || 'general'
-        const templatePath = `${locationPath}/${newDocTypeId}`
-        
-        console.log('Uploading template for new OUTPUT docType:', { newDocTypeId, templatePath })
-        
-        // Get presigned URL for templates bucket
-        const minioResponse = await fetch(`/api/minio-put?path=${encodeURIComponent(templatePath)}&bucket=templates`)
-        
-        if (!minioResponse.ok) {
-          throw new Error('Failed to get upload URL for template')
-        }
-        
-        const { url } = await minioResponse.json()
-        
-        // Upload file to MinIO
-        const uploadResponse = await fetch(url, {
-          method: 'PUT',
-          body: editModal.selectedFile
-        })
-        
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to upload template file')
-        }
-        
-        console.log('Template uploaded successfully')
-        hasTemplate = true
-      } else if (editModal.form.isInput === 1) {
-        // For INPUT docTypes, no template status (they don't use templates)
-        hasTemplate = null
-      }
-      
-      
-      // Add new docType to local state
-      const newDocType = {
-        ...responseData.data.attributes,
-        localitate_id: editModal.form.localitate_id,
-        localitate_name: getLocalitateNameById(editModal.form.localitate_id),
-        hasTemplate: hasTemplate
-      }
-      docTypes.value.push(newDocType)
-    } else {
-      // Update existing docType in local state
-      const docTypeIndex = docTypes.value.findIndex(dt => dt.id === editModal.docType.id)
-      if (docTypeIndex !== -1) {
-        docTypes.value[docTypeIndex].name = editModal.form.name
-        docTypes.value[docTypeIndex].isInput = editModal.form.isInput
-        docTypes.value[docTypeIndex].isNull = editModal.form.isNull
-        docTypes.value[docTypeIndex].tag = editModal.form.tag
-        docTypes.value[docTypeIndex].localitate_id = editModal.form.localitate_id
-        docTypes.value[docTypeIndex].localitate_name = getLocalitateNameById(editModal.form.localitate_id)
-      }
-    }
-    
-    success.value.show = true
-    if (editModal.isNew) {
-      if (editModal.form.isInput === 0 && editModal.selectedFile) {
-        success.value.message = 'DocType created and template uploaded successfully'
-      } else {
-        success.value.message = 'DocType created successfully'
-      }
-    } else {
-      success.value.message = 'DocType updated successfully'
-    }
-    closeEditModal()
-    
-  } catch (err) {
-    console.error('Save docType error:', err)
-    error.value.show = true
-    error.value.title = `${editModal.isNew ? 'Create' : 'Save'} Failed`
-    error.value.message = err.message
-  } finally {
-    editModal.saving = false
-  }
-}
-
-/**
- * Helper function to get localitate name by ID
- */
-function getLocalitateNameById(id) {
-  if (id === 155243) return 'Timișoara'
-  if (id === 155289) return 'Ghiroda'
-  if (id === 155314) return 'Giroc'
-  return null
-}
-
-
-
 
 /**
  * Remove template from MinIO
  */
-async function removeTemplate(docType) {
+ async function removeTemplate(docType) {
   if (!docType.hasTemplate) return
   
   const { confirm } = useConfirm()
@@ -746,16 +404,222 @@ async function removeTemplate(docType) {
       docTypes.value[docTypeIndex].hasTemplate = false
     }
     
-    success.value.show = true
     success.value.message = 'Template removed successfully'
     
   } catch (err) {
     console.error('Remove template error:', err)
-    error.value.show = true
     error.value.title = 'Remove Failed'
     error.value.message = err.message
   }
 }
+
+
+
+
+
+/**
+ * Open add modal for new docType
+ */
+function addDocType() {
+  editModal.show = true
+  editModal.isNew = true
+  editModal.docType = null
+  editModal.form = {
+    name: '',
+    isInput: 1,
+    tag: null,
+    localitate_id: null,
+    requiredDocs: []
+  }
+  editModal.saving = false
+}
+
+/**
+ * Open edit modal for existing docType
+ */
+function editDocType(docType) {
+  editModal.show = true
+  editModal.isNew = false
+  editModal.docType = docType
+  editModal.form = {
+    name: docType.name,
+    isInput: parseInt(docType.isInput),
+    tag: docType.tag,
+    localitate_id: docType.localitate_id,
+    requiredDocs: docType.requiredDocs ? docType.requiredDocs.map(rd => rd.id) : []
+  }
+  editModal.saving = false
+}
+
+
+/**
+ * Save docType changes or create new docType
+ */
+async function saveDocType(data) {
+  try {
+    console.log("saveDocType")
+    console.log(data)
+    
+    editModal.saving = true
+    
+    const { form, file } = data
+
+    console.log(form)
+    
+    const requestBody = {
+      data: {
+        ...(!editModal.isNew ? { id: editModal.docType.id } : {}),
+        attributes: {
+          name: form.name,
+          isInput: form.isInput != null ? Number(form.isInput) : 0,
+          tag: form.tag,
+          localitate_id: form.localitate_id ? Number(form.localitate_id) : null
+        }
+      }
+    }
+    
+    // add / edit docType in DB
+    const res = await fetch(`${dbApi}/data/docTypes${editModal.isNew ? '' : `/${editModal.docType.id}`}`, {
+      method: editModal.isNew ? 'POST' : 'PATCH',
+      body: JSON.stringify(requestBody)
+    })
+    // let res
+    // if (editModal.isNew) {
+    //   // Create new docType
+    //   res = await fetch(`${dbApi}/data/docTypes`, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json'
+    //     },
+    //     body: JSON.stringify(requestBody)
+    //   })
+    // } else {
+    //   // Update existing docType
+    //   if (!editModal.docType?.id) {
+    //     throw new Error('Could not find docType to update')
+    //   }
+      
+    //   requestBody.data.id = editModal.docType.id
+    //   res = await fetch(`${dbApi}/data/docTypes/${editModal.docType.id}`, {
+    //     method: 'PATCH',
+    //     headers: {
+    //       'Content-Type': 'application/json'
+    //     },
+    //     body: JSON.stringify(requestBody)
+    //   })
+    // }
+    
+    if (!res.ok) {
+      const errorText = await res.text()
+      console.log('Error response:', errorText)
+      error.value.message = errorText
+      throw new Error(`Failed to ${editModal.isNew ? 'create' : 'update'} docType: ${res.status} ${errorText}`)
+    }
+    
+    const responseData = await res.json()
+    console.log('Success response:', responseData)
+    
+    // Get docType ID (new or existing)
+    const docTypeId = editModal.isNew ? responseData.data.id : editModal.docType.id
+    let hasTemplate = null
+    let hasUploadedTemplate = false
+    
+    // Handle template upload for new OUTPUT docTypes
+    if (editModal.isNew && form.isInput == 0 && file) {
+      const locationPath = form.localitate_id || 'general'
+      const templatePath = `${locationPath}/${docTypeId}`
+      
+      handleTemplateUpload(file, templatePath)
+      hasTemplate = true
+      hasUploadedTemplate = true
+    } else if (form.isInput === 1) {
+      // For INPUT docTypes, no template status (they don't use templates)
+      hasTemplate = false
+    }
+    
+    await saveRequiredDocsPackages(docTypeId, form.requiredDocs)
+    
+    
+    // Update local state
+    const requiredDocsForState = form.requiredDocs.map(id => ({
+      id,
+      name: getDocTypeNameById(id)
+    })).filter(doc => doc.name)
+
+    const newDocType = {
+      ...responseData.data.attributes,
+      localitate_id: form.localitate_id,
+      hasTemplate: hasTemplate,
+      requiredDocs: requiredDocsForState
+    }
+    
+    if (editModal.isNew) {
+      docTypes.value.push(newDocType)
+    } else {
+      // Update existing docType in local state
+      const docTypeIndex = docTypes.value.findIndex(dt => dt.id === docTypeId)
+      if (docTypeIndex !== -1) {
+        docTypes.value[docTypeIndex] = newDocType
+      }
+    }
+    
+    success.value.message = 'DocType updated successfully'
+    
+    // Close modal
+    editModal.show = false
+    
+  } catch (err) {
+    console.error('Save docType error:', err)
+    error.value.title = `${editModal.isNew ? 'Create' : 'Save'} Failed`
+    error.value.message = err.message
+  } finally {
+    editModal.saving = false
+  }
+}
+
+
+/**
+ * Save required documents packages for a docType
+ */
+async function saveRequiredDocsPackages(mainDocTypeId, requiredDocIds) {
+  try {
+    // First, delete existing packages for this main docType
+    await fetch(`${dbApi}/data/doc_packages?filter=main=${mainDocTypeId}`, {
+      method: 'DELETE'
+    }).catch(err => {
+      console.error('Error deleting required docs packages:', err)
+    })
+    
+    // Then create new packages
+    for (const adjacentId of requiredDocIds) {
+      const requestBody = {
+        data: {
+          attributes: {
+            main: parseInt(mainDocTypeId),
+            adjacent: parseInt(adjacentId)
+          }
+        }
+      }
+      
+      const response = await fetch(`${dbApi}/data/doc_packages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      })
+      
+      if (!response.ok) {
+        console.warn(`Failed to create doc package: ${mainDocTypeId} -> ${adjacentId}`)
+      }
+    }
+  } catch (err) {
+    console.error('Error saving required docs packages:', err)
+  }
+}
+
+
+
 
 /**
  * Delete entire docType record
@@ -782,12 +646,10 @@ async function deleteDocType(docType) {
       docTypes.value.splice(docTypeIndex, 1)
     }
     
-    success.value.show = true
     success.value.message = `DocType "${docType.name}" deleted successfully`
     
   } catch (err) {
     console.error('Delete docType error:', err)
-    error.value.show = true
     error.value.title = 'Delete Failed'
     error.value.message = err.message
   }
