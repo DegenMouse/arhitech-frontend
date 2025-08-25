@@ -7,8 +7,7 @@
   Includes expandable sections and direct editing capabilities.
 -->
 <template>
-  <div class="bg-white rounded shadow p-6">
-    <h2 class="text-xl font-semibold text-gray-800 mb-6">Project Settings</h2>
+  <div class="space-y-6">
     
     <!-- Admin Access Required Message -->
     <div v-if="!isAdmin" class="text-center py-8">

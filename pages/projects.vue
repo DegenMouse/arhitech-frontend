@@ -184,7 +184,6 @@ onMounted(async () => {
     }
     
     const data = await res.json()
-    console.log("projects data", data.includes)
     
     // Process projects and add mock data
     const projectsData = data.includes || []

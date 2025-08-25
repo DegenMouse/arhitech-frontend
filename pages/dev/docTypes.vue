@@ -105,7 +105,6 @@
       @close="viewTplModal.show = false"
     />
 
-
     <!-- Required Docs Viewer Modal -->
     <DevRequiredDocsViewer
       v-if="requiredDocsModal.show"
@@ -163,11 +162,6 @@ const viewTplModal = reactive({
   url: null
 })
 
-// Required docs modal state
-const requiredDocsModal = reactive({
-  show: false,
-  docType: null
-})
 
 // Edit modal state
 const editModal = reactive({
@@ -423,7 +417,6 @@ async function viewTemplate(docType) {
 
 
 
-
 /**
  * Open add modal for new docType
  */
@@ -561,7 +554,6 @@ async function saveDocType(data) {
     }
     
     if (editModal.isNew) {
-      // Add new docType to local state
       docTypes.value.push(newDocType)
     } else {
       // Update existing docType in local state
@@ -585,14 +577,6 @@ async function saveDocType(data) {
   }
 }
 
-
-/**
- * Helper function to get docType name by ID
- */
-function getDocTypeNameById(id) {
-  const docType = docTypes.value.find(dt => dt.id === id)
-  return docType?.name || null
-}
 
 /**
  * Save required documents packages for a docType
