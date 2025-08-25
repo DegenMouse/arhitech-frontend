@@ -25,7 +25,7 @@
       >
         <!-- Main document header -->
         <div class="flex items-center justify-between mb-3">
-          <h3 class="font-medium text-gray-900">{{ mainDoc.docType?.name || 'Unknown Document' }}</h3>
+          <h3 class="font-medium text-gray-900">{{ formatDocumentName(mainDoc.docType?.name) }}</h3>
           <span 
             :class="getStateColor(mainDoc.state)" 
             class="px-2 py-1 text-xs font-medium rounded-full"
@@ -37,7 +37,7 @@
         <!-- Completion progress bar -->
         <div class="space-y-2">
           <div class="flex justify-between text-sm">
-            <span class="text-gray-600">Adjacent Documents</span>
+            <span class="text-gray-600">Documente necesare</span>
             <span class="font-medium text-gray-900">
               {{ mainDoc.completedCount }}/{{ mainDoc.totalCount }}
             </span>
@@ -75,7 +75,7 @@
       <div class="sticky top-0 bg-white border-b px-6 py-4">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-xl font-semibold text-gray-900">
-            {{ adjacentModal.mainDocument?.docType?.name || 'Main Document' }}
+            {{ formatDocumentName(adjacentModal.mainDocument?.docType?.name) || 'Main Document' }}
           </h2>
           <button 
             @click="adjacentModal.show = false"
@@ -87,7 +87,7 @@
           </button>
         </div>
         <div class="text-sm text-gray-600">
-          [ {{ adjacentModal.adjacentDocs?.filter(doc => doc.state === 'finished').length || 0 }}/{{ adjacentModal.adjacentDocs?.length || 0 }} uploaded ]
+          [ {{ (adjacentModal.adjacentDocs?.filter(doc => doc.state === 'finished').length || 0) + (adjacentModal.mainDocument?.state === 'finished' ? 1 : 0) }}/{{ (adjacentModal.adjacentDocs?.length || 0) + 1 }} Confirmate ]
         </div>
       </div>
       
@@ -97,14 +97,14 @@
         <div class="border-b border-gray-300 p-6">
           <div class="flex items-center gap-2 mb-4">
             <span class="text-lg">📄</span>
-            <h3 class="font-semibold text-gray-900">Main Document</h3>
+            <h3 class="font-semibold text-gray-900">Document principal</h3>
           </div>
           <div class="border-b border-gray-200 mb-4"></div>
           
           <div class="flex items-center justify-between">
             <div>
               <div class="font-medium text-gray-900 mb-1">
-                {{ adjacentModal.mainDocument?.docType?.name || 'Unknown Document' }}
+                {{ formatDocumentName(adjacentModal.mainDocument?.docType?.name) }}
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-sm text-gray-600">Status:</span>
@@ -150,21 +150,21 @@
         </div>
         
         <!-- Adjacent Documents Section -->
-        <div class="p-6">
+        <div v-if="adjacentModal.adjacentDocs && adjacentModal.adjacentDocs.length" class="p-6">
           <div class="flex items-center gap-2 mb-4">
             <span class="text-lg">📑</span>
-            <h3 class="font-semibold text-gray-900">Adjacent Documents</h3>
+            <h3 class="font-semibold text-gray-900">Documente necesare</h3>
           </div>
           <div class="border-b border-gray-200 mb-4"></div>
           
-          <div v-if="adjacentModal.adjacentDocs.length" class="space-y-3">
+          <div class="space-y-3">
             <div 
               v-for="doc in adjacentModal.adjacentDocs" 
               :key="doc.id"
               class="flex items-center justify-between py-2"
             >
               <div class="flex items-center gap-3 flex-1">
-                <span class="font-medium text-gray-900 min-w-0 flex-1">{{ doc.docType?.name || 'Unknown Document' }}</span>
+                <span class="font-medium text-gray-900 min-w-0 flex-1">{{ formatDocumentName(doc.docType?.name) }}</span>
                 <span 
                   :class="getStateColor(doc.state)"
                   class="text-sm font-medium capitalize px-2"
@@ -210,10 +210,6 @@
                 </button>
               </div>
             </div>
-          </div>
-          
-          <div v-else class="text-center py-4 text-gray-500">
-            No adjacent documents found
           </div>
         </div>
       </div>
@@ -290,11 +286,13 @@ const mainDocuments = computed(() => {
     const relatedPackages = docPackages.value.filter(pkg => pkg.main === mainDoc.docType_id)
     
     if (relatedPackages.length === 0) {
+      // Only main document, no adjacent documents
+      const isMainDocCompleted = mainDoc.state === 'finished' ? 1 : 0
       return {
         ...mainDoc,
-        completedCount: 0,
-        totalCount: 0,
-        completionPercentage: 0
+        completedCount: isMainDocCompleted,
+        totalCount: 1,
+        completionPercentage: isMainDocCompleted * 100
       }
     }
     
@@ -303,13 +301,18 @@ const mainDocuments = computed(() => {
     
     // Find all adjacent documents for this main document
     const adjacentDocs = docs.value.filter(doc => adjacentDocTypeIds.includes(doc.docType_id))
-    const completedDocs = adjacentDocs.filter(doc => doc.state === 'finished')
+    const completedAdjacentDocs = adjacentDocs.filter(doc => doc.state === 'finished')
+    
+    // Include main document in completion calculation
+    const isMainDocCompleted = mainDoc.state === 'finished' ? 1 : 0
+    const totalDocs = adjacentDocs.length + 1 // +1 for main document
+    const completedDocs = completedAdjacentDocs.length + isMainDocCompleted
     
     return {
       ...mainDoc,
-      completedCount: completedDocs.length,
-      totalCount: adjacentDocs.length,
-      completionPercentage: adjacentDocs.length > 0 ? (completedDocs.length / adjacentDocs.length) * 100 : 0
+      completedCount: completedDocs,
+      totalCount: totalDocs,
+      completionPercentage: (completedDocs / totalDocs) * 100
     }
   })
 })
@@ -341,6 +344,18 @@ function openMainDocumentModal(mainDoc) {
 function openUploadModal(docId) {
   uploadModal.docId = docId
   uploadModal.show = true
+}
+
+/**
+ * Converts snake_case document names to Title Case with spaces
+ */
+function formatDocumentName(name) {
+  if (!name) return 'Unknown Document'
+  
+  return name
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
 }
 
 /**
