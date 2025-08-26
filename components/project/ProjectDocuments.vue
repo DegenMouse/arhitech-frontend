@@ -8,6 +8,23 @@
 -->
 <template>
   <div>
+    <!-- Filter dropdown -->
+    <div class="mb-6">
+      <label for="tag-filter" class="block text-sm font-medium text-gray-700 mb-2">
+        Filtrează după tip document:
+      </label>
+      <select
+        id="tag-filter"
+        v-model="selectedTag"
+        class="block w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+      >
+        <option value="">Toate documentele</option>
+        <option v-for="tag in availableTags" :key="tag" :value="tag">
+          {{ formatTagName(tag) }}
+        </option>
+      </select>
+    </div>
+
     <!-- Loading state -->
     <div v-if="loading" class="space-y-4">
       <div v-for="i in 3" :key="i" class="animate-pulse">
@@ -16,7 +33,7 @@
     </div>
     
     <!-- Main documents grid -->
-    <div v-else-if="mainDocuments.length" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div v-if="mainDocuments.length" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <div 
         v-for="mainDoc in mainDocuments" 
         :key="mainDoc.id" 
@@ -118,21 +135,21 @@
             </div>
             <div class="flex gap-2">
               <button 
-                v-if="adjacentModal?.mainDocument?.state === 'missing'"
+                v-if="adjacentModal?.mainDocument?.state === 'needed'"
                 @click="openUploadModal(adjacentModal?.mainDocument?.id)" 
                 class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
               >
                 Upload
               </button>
               <button 
-                v-if="adjacentModal?.mainDocument?.state !== 'missing' && adjacentModal?.adjacentDocs?.every(doc => doc.state === 'finished')"
+                v-if="adjacentModal?.mainDocument?.state !== 'needed' && adjacentModal?.mainDocument?.state !== 'pending' && adjacentModal?.adjacentDocs?.every(doc => doc.state === 'finished')"
                 @click="docOpen(adjacentModal?.mainDocument?.id)" 
                 class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
               >
                 View
               </button>
               <button 
-                v-if="adjacentModal?.mainDocument?.state !== 'missing' && adjacentModal?.adjacentDocs?.every(doc => doc.state === 'finished')"
+                v-if="adjacentModal?.mainDocument?.state !== 'needed' && adjacentModal?.mainDocument?.state !== 'pending' && adjacentModal?.adjacentDocs?.every(doc => doc.state === 'finished')"
                 @click="openUploadModal(adjacentModal?.mainDocument?.id)" 
                 class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
               >
@@ -212,6 +229,22 @@
             </div>
           </div>
         </div>
+        
+        <!-- Undefined Document Warning (at bottom) -->
+        <div v-if="adjacentModal?.mainDocument?.docType?.defined === 0 || adjacentModal?.mainDocument?.docType?.defined === '0'" class="border-t border-gray-200 p-4 bg-amber-50">
+          <div class="flex items-start">
+            <div class="flex-shrink-0">
+              <svg class="w-4 h-4 text-amber-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <div class="ml-2">
+              <p class="text-xs text-amber-700">
+                <strong>Notă:</strong> Acest document nu există momentan în baza de date ArhiTech. Documentele asociate necesare nu sunt încă definite. Tipul de document va fi disponibil la următorul update.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -255,6 +288,7 @@ const { success } = useUI()
 const docs = ref([])
 const docPackages = ref([])
 const loading = ref(true)
+const selectedTag = ref('')
 
 // Modal state management
 const uploadModal = reactive({
@@ -275,10 +309,15 @@ const adjacentModal = reactive({
 
 // Computed property for main documents
 const mainDocuments = computed(() => {
-  // Filter documents that are "needed" state and appear as "main" in doc_packages
-  const mainDocs = docs.value.filter(doc => {
-    return doc.state === 'needed' 
+  // Filter documents that are "needed" state (includes both defined and undefined)
+  let mainDocs = docs.value.filter(doc => {
+    return doc.state === 'needed'
   })
+  
+  // Apply tag filter if selected
+  if (selectedTag.value) {
+    mainDocs = mainDocs.filter(doc => doc.docType?.tag === selectedTag.value)
+  }
   
   // Add completion data for each main document
   return mainDocs.map(mainDoc => {
@@ -321,6 +360,9 @@ const mainDocuments = computed(() => {
  * Opens the adjacent documents modal for a main document
  */
 function openMainDocumentModal(mainDoc) {
+  console.log('Opening modal for document:', mainDoc) // Debug log
+  console.log('DocType defined value:', mainDoc.docType?.defined) // Debug log
+  
   // Find ALL doc_packages for this main document (there can be multiple)
   const relatedPackages = docPackages.value.filter(pkg => pkg.main === mainDoc.docType_id)
   
@@ -344,6 +386,24 @@ function openMainDocumentModal(mainDoc) {
 function openUploadModal(docId) {
   uploadModal.docId = docId
   uploadModal.show = true
+}
+
+// Computed property for available tags
+const availableTags = computed(() => {
+  return ['avize', 'CU', 'studii']
+})
+
+
+/**
+ * Formats tag names for display
+ */
+function formatTagName(tag) {
+  const tagNames = {
+    'avize': 'Avize',
+    'CU': 'Certificat de Urbanism',
+    'studii': 'Studii'
+  }
+  return tagNames[tag] || tag
 }
 
 /**
