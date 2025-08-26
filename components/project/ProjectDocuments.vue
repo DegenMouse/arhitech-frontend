@@ -66,7 +66,7 @@
 
   <!-- Adjacent Documents Modal -->
   <div 
-    v-if="adjacentModal.show" 
+    v-if="adjacentModal && adjacentModal.show" 
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
     @click.self="adjacentModal.show = false"
   >
@@ -78,7 +78,7 @@
             {{ formatDocumentName(adjacentModal.mainDocument?.docType?.name) || 'Main Document' }}
           </h2>
           <button 
-            @click="adjacentModal.show = false"
+            @click="adjacentModal && (adjacentModal.show = false)"
             class="text-gray-400 hover:text-gray-600"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,7 +86,7 @@
             </svg>
           </button>
         </div>
-        <div class="text-sm text-gray-600">
+        <div v-if="adjacentModal" class="text-sm text-gray-600">
           [ {{ (adjacentModal.adjacentDocs?.filter(doc => doc.state === 'finished').length || 0) + (adjacentModal.mainDocument?.state === 'finished' ? 1 : 0) }}/{{ (adjacentModal.adjacentDocs?.length || 0) + 1 }} Confirmate ]
         </div>
       </div>
@@ -104,43 +104,43 @@
           <div class="flex items-center justify-between">
             <div>
               <div class="font-medium text-gray-900 mb-1">
-                {{ formatDocumentName(adjacentModal.mainDocument?.docType?.name) }}
+                {{ formatDocumentName(adjacentModal?.mainDocument?.docType?.name) }}
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-sm text-gray-600">Status:</span>
                 <span 
-                  :class="getStateColor(adjacentModal.mainDocument?.state)"
+                  :class="getStateColor(adjacentModal?.mainDocument?.state)"
                   class="text-sm font-medium capitalize"
                 >
-                  {{ adjacentModal.mainDocument?.state }}
+                  {{ adjacentModal?.mainDocument?.state }}
                 </span>
               </div>
             </div>
             <div class="flex gap-2">
               <button 
-                v-if="adjacentModal.mainDocument?.state === 'missing'"
-                @click="openUploadModal(adjacentModal.mainDocument.id)" 
+                v-if="adjacentModal?.mainDocument?.state === 'missing'"
+                @click="openUploadModal(adjacentModal?.mainDocument?.id)" 
                 class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
               >
                 Upload
               </button>
               <button 
-                v-if="adjacentModal.mainDocument?.state !== 'missing' && adjacentModal.adjacentDocs.every(doc => doc.state === 'finished')"
-                @click="docOpen(adjacentModal.mainDocument.id)" 
+                v-if="adjacentModal?.mainDocument?.state !== 'missing' && adjacentModal?.adjacentDocs?.every(doc => doc.state === 'finished')"
+                @click="docOpen(adjacentModal?.mainDocument?.id)" 
                 class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
               >
                 View
               </button>
               <button 
-                v-if="adjacentModal.mainDocument?.state !== 'missing' && adjacentModal.adjacentDocs.every(doc => doc.state === 'finished')"
-                @click="openUploadModal(adjacentModal.mainDocument.id)" 
+                v-if="adjacentModal?.mainDocument?.state !== 'missing' && adjacentModal?.adjacentDocs?.every(doc => doc.state === 'finished')"
+                @click="openUploadModal(adjacentModal?.mainDocument?.id)" 
                 class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
               >
                 Re-upload
               </button>
               <button 
-                v-if="adjacentModal.mainDocument?.state === 'progress'"
-                @click="finish(adjacentModal.mainDocument.id, '1')" 
+                v-if="adjacentModal?.mainDocument?.state === 'progress'"
+                @click="finish(adjacentModal?.mainDocument?.id, '1')" 
                 class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
               >
                 Finish
@@ -150,7 +150,7 @@
         </div>
         
         <!-- Adjacent Documents Section -->
-        <div v-if="adjacentModal.adjacentDocs && adjacentModal.adjacentDocs.length" class="p-6">
+        <div v-if="adjacentModal && adjacentModal.adjacentDocs && adjacentModal.adjacentDocs.length" class="p-6">
           <div class="flex items-center gap-2 mb-4">
             <span class="text-lg">📑</span>
             <h3 class="font-semibold text-gray-900">Documente necesare</h3>
@@ -219,20 +219,20 @@
 
   <!-- File upload modal -->
   <ModalsUploadFile 
-    v-if="uploadModal.show" 
+    v-if="uploadModal && uploadModal.show" 
     :singleFile="true" 
     :docId="uploadModal.docId"
-    @close="uploadModal.show = false" 
+    @close="uploadModal && (uploadModal.show = false)" 
     @upload="docUpload" 
   />
 
   <!-- Document viewing modal -->
   <ModalsFile
-    v-if="documentModal.show"
+    v-if="documentModal && documentModal.show"
     :isPdf="documentModal.isPdf"
     :url="documentModal.url"
     :docId="documentModal.docId"
-    @close="documentModal.show = false"
+    @close="documentModal && (documentModal.show = false)"
     @change="docUpload"
   />
 </template>

@@ -162,6 +162,12 @@ const viewTplModal = reactive({
   url: null
 })
 
+// Required docs modal state
+const requiredDocsModal = reactive({
+  show: false,
+  docType: null
+})
+
 
 // Edit modal state
 const editModal = reactive({
