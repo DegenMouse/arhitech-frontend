@@ -22,7 +22,7 @@
           <!-- Missing state: Upload button -->
           <button 
             v-if="document.state === 'missing'"
-            @click="$emit('upload', document.id)"
+            @click="$emit('upload', document)"
             class="px-3 py-1 text-white text-sm rounded hover:opacity-90"
             style="background-color: #0c47b0;"
           >
@@ -38,7 +38,7 @@
               View
             </button>
             <button 
-              @click="$emit('upload', document.id)"
+              @click="$emit('upload', document)"
               class="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded"
             >
               Re-upload

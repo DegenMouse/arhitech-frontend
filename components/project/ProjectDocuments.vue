@@ -148,7 +148,7 @@ const documents = computed(() => {
   return allDocs
 })
 
-// Computed property for main documents (needed or pending state)
+// Computed property for main documents (needed or pending state) PROGRESS BAR
 const mainDocuments = computed(() => {
   return documents.value
     .filter(doc => doc.state === 'needed' || doc.state === 'pending')
@@ -206,11 +206,11 @@ function openMainDocModal(doc) {
 /**
  * Opens upload modal for a document
  */
-function openUploadModal(docId) {
+function openUploadModal(document) {
   // Close main modal if open
   mainDocModal.show = false
   
-  uploadModal.docId = docId
+  uploadModal.docId = document.id
   uploadModal.show = true
 }
 
@@ -258,9 +258,45 @@ async function docOpen(docId) {
 }
 
 /**
+ * Helper function to update document state in database and local state
+ */
+async function updateDocumentState(docId, newState) {
+  const docIndex = docs.value.findIndex(doc => doc.id === docId)
+  if (docIndex === -1) return
+
+  try {
+    await fetch(dbApi + '/data/projDocs/' + docId, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        data: {
+          id: docId,
+          attributes: {
+            state: newState
+          }
+        }
+      })
+    }).then(res => {
+      if (!res.ok) {
+        throw new Error('Failed to update document state')
+      }
+      // Update local state to match
+      docs.value[docIndex].state = newState
+      
+      // Update main modal if open and matches this document
+      if (mainDocModal.show && mainDocModal.document?.id === docId) {
+        mainDocModal.document.state = newState
+      }
+    })
+  } catch (error) {
+    console.error('Failed to update document state:', error)
+    throw new Error('DB ERROR')
+  }
+}
+
+/**
  * Uploads a document to MinIO and updates document status
  */
-async function docUpload(file, docId) {
+async function docUpload(file, document) {
   if (!(file instanceof File)) {
     return
   }
@@ -295,7 +331,7 @@ async function docUpload(file, docId) {
     }
 
     const bucket = useRuntimeConfig().public.buckets.companyFiles
-    const path = `${company.value.id}/projects/${props.project.id}/${docId}`
+    const path = `${company.value.id}/projects/${props.project.id}/${document.id}`
 
     // Get presigned URL for file upload
     const minioUrl = await fetch(`/api/minio-put?path=${encodeURIComponent(path)}&bucket=${bucket}`)
@@ -321,29 +357,18 @@ async function docUpload(file, docId) {
       throw new Error('MINIO ERROR')
     })
 
-    // Update document status to pending if upload successful
-    const docIndex = docs.value.findIndex(doc => doc.id === docId)
-    if(docIndex !== -1 && docs.value[docIndex].state == 'missing'){
-      await fetch(dbApi + '/data/projDocs/' + docId, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          data: {
-            id: docId,
-            attributes: {
-              state: "pending"
-            }
-          }
-        })
-      }).then(res => {
-        if (!res.ok) {
-          throw new Error('Failed to update document')
-        }
-        docs.value[docIndex].state = 'pending'
-      }).catch(err => {
-        console.error('Failed to update document:', err)
-        throw new Error('DB ERROR')
-      })
+    // Determine new state based on AI parsability (static config)
+    let newState = 'done' // Default state for non-AI documents
+    
+    if (Number(document.docType?.aiParsable) === 1) {
+      // This document type is AI parsable
+      newState = 'processing'
+      console.log("AI")
+      // Future: Could trigger AI processing for this docType
     }
+    
+    // Update document state
+    await updateDocumentState(document.id, newState)
 
     // Show success message if upload completed
     success.value.message = "Document uploaded successfully"
@@ -357,35 +382,10 @@ async function docUpload(file, docId) {
  */
 async function markAsSent(docId) {
   try {
-    await fetch(dbApi + '/data/projDocs/' + docId, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        data: {
-          id: docId,
-          attributes: {
-            state: 'pending'
-          }
-        }
-      })
-    }).then(res => {
-      if (!res.ok) {
-        throw new Error('Failed to update document')
-      }
-      
-      // Update local state
-      const docIndex = docs.value.findIndex(doc => doc.id === docId)
-      if (docIndex !== -1) {
-        docs.value[docIndex].state = 'pending'
-      }
-      
-      // Update main modal if open
-      if (mainDocModal.show && mainDocModal.document?.id === docId) {
-        mainDocModal.document.state = 'pending'
-      }
-      
-      // Show success message
-      success.value.message = "Document marked as sent successfully"
-    })
+    await updateDocumentState(docId, 'pending')
+    
+    // Show success message
+    success.value.message = "Document marked as sent successfully"
   } catch (error) {
     console.error('Failed to mark document as sent:', error)
   }

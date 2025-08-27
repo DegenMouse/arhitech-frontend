@@ -48,7 +48,7 @@
               
               <button 
                 v-if="(mainDocument?.state === 'done' || mainDocument?.state === 'rejected')"
-                @click="$emit('upload', mainDocument?.id)" 
+                @click="$emit('upload', mainDocument)" 
                 class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
               >
                 Re-upload
@@ -56,17 +56,9 @@
               
             </div>
           </div>
-        </div>
-        
-        <!-- Destination Section -->
-        <div v-if="mainDocument?.docType?.destination" class="border-b border-gray-300 p-6">
-          <div class="flex items-center gap-2 mb-4">
-            <span class="text-lg">🔗</span>
-            <h3 class="font-semibold text-gray-900">Destinație</h3>
-          </div>
-          <div class="border-b border-gray-200 mb-4"></div>
           
-          <div class="flex items-center justify-between">
+          <!-- Destination Section -->
+          <div v-if="mainDocument?.docType?.destination" class="mt-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
               <svg v-if="!isEmail(mainDocument?.docType?.destination)" class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -79,15 +71,6 @@
               </span>
             </div>
             <div class="flex items-center gap-2">
-              <!-- Upload button for pending state -->
-              <button 
-                v-if="mainDocument?.state === 'pending'"
-                @click="$emit('upload', mainDocument?.id)" 
-                class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-              >
-                Upload
-              </button>
-              
               <!-- Destination buttons -->
               <button 
                 v-if="!isEmail(mainDocument?.docType?.destination)"
@@ -117,6 +100,15 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
                 Marchează trimis
+              </button>
+              
+              <!-- Upload button for pending state on far right -->
+              <button 
+                v-if="mainDocument?.state === 'pending'"
+                @click="$emit('upload', mainDocument)" 
+                class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
+              >
+                Upload
               </button>
             </div>
           </div>
@@ -149,7 +141,7 @@
                 <!-- Adjacent document action buttons -->
                 <button 
                   v-if="(doc.state === 'missing' || doc.state === 'needed') && Number(doc.docType?.isInput) === 1"
-                  @click="$emit('upload', doc.id)" 
+                  @click="$emit('upload', doc)" 
                   class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
                 >
                   Upload
@@ -165,7 +157,7 @@
                 
                 <button 
                   v-if="doc.state === 'progress' && Number(doc.docType?.isInput) === 1"
-                  @click="$emit('upload', doc.id)" 
+                  @click="$emit('upload', doc)" 
                   class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
                 >
                   Re-upload
@@ -219,12 +211,11 @@ function formatDocumentName(name) {
 
 function getStateColor(state) {
   const colors = {
-    missing: 'text-red-600',
     needed: 'text-red-900',
     pending: 'text-orange-600',
-    filled: 'text-yellow-600',
-    finished: 'text-green-600',
-    progress: 'text-blue-600'
+    done: 'text-green-600',
+    rejected: 'text-red-600',
+    processing: 'text-blue-600'
   }
   return colors[state] || 'text-gray-600'
 }
