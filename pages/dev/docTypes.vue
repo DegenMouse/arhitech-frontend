@@ -30,7 +30,7 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="docType in docTypes" :key="docType.id" 
-              :class="docType.isNull ? 'bg-gray-100 hover:bg-gray-200' : 'hover:bg-gray-50'">
+              :class="docType.defined ? 'bg-gray-100 hover:bg-gray-200' : 'hover:bg-gray-50'">
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ docType.id }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ docType.name }}</td>
             <td class="px-6 py-4 whitespace-nowrap">

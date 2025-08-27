@@ -1,10 +1,8 @@
 <!--
   components/project/ProjectDocuments.vue
   ---------------------------------------
-  Project documents panel component with Main Documents concept.
-  Shows main documents with completion progress bars for adjacent documents.
-  Features modal view for adjacent documents management and workflow.
-  Integrates with doc_packages table for document relationships.
+  Simplified document management component that renders main documents with progress bars
+  and simple documents with direct actions. Uses modular components for clean architecture.
 -->
 <template>
   <div>
@@ -33,81 +31,23 @@
     </div>
     
     <!-- Documents grid -->
-    <div v-if="documents.length" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <div 
-        v-for="doc in documents" 
-        :key="doc.id" 
-        class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-        :class="{ 'cursor-pointer': doc.hasAdjacent }"
-        @click="doc.hasAdjacent ? openDocumentModal(doc) : null"
-      >
-        <!-- Document layout with consistent structure -->
-        <div class="flex flex-col h-full">
-          <!-- Document name and status row -->
-          <div class="flex items-start justify-between gap-2 mb-3">
-            <h3 class="font-medium text-gray-900 flex-1">{{ formatDocumentName(doc.docType?.name) }}</h3>
-            <span 
-              :class="getStateColor(doc.state)" 
-              class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap flex-shrink-0"
-            >
-              {{ doc.state }}
-            </span>
-          </div>
-          
-          <!-- Progress bar for documents with adjacent docs -->
-          <div v-if="doc.hasAdjacent" class="space-y-2 mb-4">
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-600">Documente necesare</span>
-              <span class="font-medium text-gray-900">
-                {{ doc.completedCount }}/{{ doc.totalCount }}
-              </span>
-            </div>
-            
-            <!-- Progress bar -->
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                class="h-2 rounded-full transition-all duration-300"
-                :class="doc.completionPercentage === 100 ? 'bg-green-500' : 'bg-blue-500'"
-                :style="`width: ${doc.completionPercentage}%`"
-              ></div>
-            </div>
-            
-            <div class="text-xs text-gray-500">
-              {{ Math.round(doc.completionPercentage) }}% Complete
-            </div>
-          </div>
-          
-          <!-- Spacer to push buttons to bottom -->
-          <div class="flex-1"></div>
-          
-          <!-- Action buttons at bottom -->
-          <div class="flex flex-wrap gap-2 mt-auto">
-            <button 
-              v-if="doc.docType?.isInput === '0'"
-              @click.stop="docOpen(doc.id)"
-              class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-            >
-              View
-            </button>
-            <button 
-              v-if="!doc.hasAdjacent && doc.state === 'progress' && doc.docType?.isInput === '1'"
-              @click.stop="openUploadModal(doc.id)"
-              class="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white text-sm rounded"
-            >
-              Re-upload
-            </button>
-            
-            <button 
-              v-if="!doc.hasAdjacent && (doc.state === 'missing' || doc.state === 'needed') && doc.docType?.isInput === '1'"
-              @click.stop="openUploadModal(doc.id)"
-              class="px-3 py-1 text-white text-sm rounded hover:opacity-90"
-              style="background-color: #0c47b0;"
-            >
-              Upload
-            </button>
-          </div>
-        </div>
-      </div>
+    <div v-else-if="documents.length" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <!-- Main Documents (needed or pending state) -->
+      <MainDocumentCard
+        v-for="doc in mainDocuments" 
+        :key="`main-${doc.id}`"
+        :document="doc"
+        @open-modal="openMainDocModal"
+      />
+      
+      <!-- Simple Documents (all other states) -->
+      <SimpleDocumentCard
+        v-for="doc in simpleDocuments" 
+        :key="`simple-${doc.id}`"
+        :document="doc"
+        @upload="openUploadModal"
+        @view="docOpen"
+      />
     </div>
     
     <!-- Empty state -->
@@ -115,238 +55,44 @@
       <p>No documents found</p>
     </div>
 
-  <!-- Adjacent Documents Modal -->
-  <div 
-    v-if="adjacentModal && adjacentModal.show" 
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-    @click.self="adjacentModal.show = false"
-  >
-    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-      <!-- Modal header -->
-      <div class="sticky top-0 bg-white border-b px-6 py-4">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-xl font-semibold text-gray-900">
-            {{ formatDocumentName(adjacentModal.document?.docType?.name) || 'Document' }}
-          </h2>
-          <button 
-            @click="adjacentModal && (adjacentModal.show = false)"
-            class="text-gray-400 hover:text-gray-600"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
-        <div v-if="adjacentModal" class="text-sm text-gray-600">
-          [ {{ (adjacentModal.adjacentDocs?.filter(doc => doc.state === 'finished').length || 0) + (adjacentModal.document?.state === 'finished' ? 1 : 0) }}/{{ (adjacentModal.adjacentDocs?.length || 0) + 1 }} Confirmate ]
-        </div>
-      </div>
-      
-      <!-- Modal content -->
-      <div class="p-0">
-        <!-- Main Document Section -->
-        <div class="border-b border-gray-300 p-6">
-          <div class="flex items-center gap-2 mb-4">
-            <span class="text-lg">📄</span>
-            <h3 class="font-semibold text-gray-900">Document principal</h3>
-          </div>
-          <div class="border-b border-gray-200 mb-4"></div>
-          
-          <div class="flex items-center justify-between">
-            <div class="font-medium text-gray-900 mb-1 flex-1">
-              {{ formatDocumentName(adjacentModal?.document?.docType?.name) }}
-            </div>
-            <div class="flex items-center gap-2 ">
-              <span 
-                :class="getStateColor(adjacentModal?.document?.state)"
-                class="text-sm font-medium capitalize mr-4"
-              >
-                {{ adjacentModal?.document?.state }}
-              </span>
-                <button 
-                  v-if="(adjacentModal?.document?.state === 'needed' || adjacentModal?.document?.state === 'missing') && adjacentModal?.document?.docType?.isInput === '1'"
-                  @click="openUploadModal(adjacentModal?.document?.id)" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-                >
-                  Upload
-                </button>
-                <button 
-                  v-if="adjacentModal?.document?.docType?.isInput === '0'"
-                  @click="docOpen(adjacentModal?.document?.id)" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-                >
-                  View
-                </button>
-                <button 
-                  v-if="adjacentModal?.document?.state === 'progress' && adjacentModal?.document?.docType?.isInput === '1'"
-                  @click="openUploadModal(adjacentModal?.document?.id)" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-                >
-                  Re-upload
-                </button>
-                <button 
-                  v-if="adjacentModal?.document?.state === 'progress'"
-                  @click="finish(adjacentModal?.document?.id, '1')" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-                >
-                  Finish
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Destination Section -->
-          <div v-if="adjacentModal?.document?.docType?.destination" class="mt-3 px-6">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <svg v-if="!isEmail(adjacentModal?.document?.docType?.destination)" class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <svg v-else class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
-                <span class="text-sm text-gray-700">
-                  {{ isEmail(adjacentModal?.document?.docType?.destination) ? 'Trimite cererea pe email' : 'Completează cererea pe site-ul' }}
-                </span>
-              </div>
-              <div class="flex items-center gap-2">
-                <button 
-                  v-if="!isEmail(adjacentModal?.document?.docType?.destination)"
-                  @click="openLink(adjacentModal?.document?.docType?.destination)" 
-                  class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded flex items-center gap-2"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                  </svg>
-                  Vizitează Link
-                </button>
-                <button 
-                  v-else
-                  @click="openEmail(adjacentModal?.document?.docType?.destination)" 
-                  class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded flex items-center gap-2"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                  </svg>
-                  Trimite Email
-                </button>
-                <button 
-                  class="px-3 py-1 bg-blue-800 hover:bg-blue-900 text-white text-sm rounded flex items-center gap-2"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  Marchează trimis
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Adjacent Documents Section -->
-        <div v-if="adjacentModal && adjacentModal.adjacentDocs && adjacentModal.adjacentDocs.length" class="p-6">
-          <div class="flex items-center gap-2 mb-4">
-            <span class="text-lg">📑</span>
-            <h3 class="font-semibold text-gray-900">Documente necesare</h3>
-          </div>
-          <div class="border-b border-gray-200 mb-4"></div>
-          
-          <div class="space-y-3">
-            <div 
-              v-for="doc in adjacentModal.adjacentDocs" 
-              :key="doc.id"
-              class="flex items-center justify-between py-2"
-            >
-              <div class="flex items-center gap-3 flex-1">
-                <span class="font-medium text-gray-900 min-w-0 flex-1">{{ formatDocumentName(doc.docType?.name) }}</span>
-                <span 
-                  :class="getStateColor(doc.state)"
-                  class="text-sm font-medium capitalize px-2"
-                >
-                  {{ doc.state }}
-                </span>
-              </div>
-              <div class="flex gap-2 ml-4">
-                <button 
-                  v-if="(doc.state === 'missing' || doc.state === 'needed') && doc.docType?.isInput === '1'"
-                  @click="openUploadModal(doc.id)" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-                >
-                  Upload
-                </button>
-                <button 
-                  v-if="doc.docType?.isInput === '0'"
-                  @click="docOpen(doc.id)" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-                >
-                  View
-                </button>
-                <button 
-                  v-if="doc.state === 'progress' && doc.docType?.isInput === '1'"
-                  @click="openUploadModal(doc.id)" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-                >
-                  Re-upload
-                </button>
-                <button 
-                  v-if="doc.state === 'progress'"
-                  @click="finish(doc.id, '1')" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-                >
-                  Finish
-                </button>
-                <button 
-                  v-if="doc.state === 'finished'"
-                  @click="finish(doc.id, '0')" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-                >
-                  Unfinish
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Undefined Document Warning (at bottom) -->
-        <div v-if="adjacentModal?.document?.docType?.defined === 0 || adjacentModal?.document?.docType?.defined === '0'" class="border-t border-gray-200 p-4 bg-amber-50">
-          <div class="flex items-start">
-            <div class="flex-shrink-0">
-              <svg class="w-4 h-4 text-amber-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-              </svg>
-            </div>
-            <div class="ml-2">
-              <p class="text-xs text-amber-700">
-                <strong>Notă:</strong> Acest document nu există momentan în baza de date ArhiTech. Documentele asociate necesare nu sunt încă definite. Tipul de document va fi disponibil la următorul update.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Main Document Modal -->
+    <MainDocModal
+      v-if="mainDocModal.show"
+      :main-document="mainDocModal.document"
+      :adjacent-docs="mainDocModal.adjacentDocs"
+      @close="mainDocModal.show = false"
+      @upload="openUploadModal"
+      @view="docOpen"
+      @finish="finish"
+    />
+
+    <!-- File upload modal -->
+    <ModalsUploadFile 
+      v-if="uploadModal && uploadModal.show" 
+      :singleFile="true" 
+      :docId="uploadModal.docId"
+      @close="uploadModal && (uploadModal.show = false)" 
+      @upload="docUpload" 
+    />
+
+    <!-- Document viewing modal -->
+    <ModalsFile
+      v-if="documentModal && documentModal.show"
+      :isPdf="documentModal.isPdf"
+      :url="documentModal.url"
+      :docId="documentModal.docId"
+      @close="documentModal && (documentModal.show = false)"
+      @change="docUpload"
+    />
   </div>
-
-  <!-- File upload modal -->
-  <ModalsUploadFile 
-    v-if="uploadModal && uploadModal.show" 
-    :singleFile="true" 
-    :docId="uploadModal.docId"
-    @close="uploadModal && (uploadModal.show = false)" 
-    @upload="docUpload" 
-  />
-
-  <!-- Document viewing modal -->
-  <ModalsFile
-    v-if="documentModal && documentModal.show"
-    :isPdf="documentModal.isPdf"
-    :url="documentModal.url"
-    :docId="documentModal.docId"
-    @close="documentModal && (documentModal.show = false)"
-    @change="docUpload"
-  />
 </template>
 
 <script setup>
+// Import new components
+import MainDocumentCard from './component/MainDocumentCard.vue'
+import SimpleDocumentCard from './component/SimpleDocumentCard.vue'
+import MainDocModal from './modal/MainDocModal.vue'
+
 // Component props
 const props = defineProps({
   project: {
@@ -377,18 +123,13 @@ const documentModal = reactive({
   url: null,
   docId: null
 })
-const adjacentModal = reactive({
+const mainDocModal = reactive({
   show: false,
   document: null,
   adjacentDocs: []
 })
 
-// Helper function to check if a document has adjacent documents
-function hasAdjacentDocs(doc) {
-  return docPackages.value.some(pkg => pkg.main === doc.docType_id)
-}
-
-// Computed property for all documents
+// Computed property for filtering documents
 const documents = computed(() => {
   // Get documents based on filter selection
   let allDocs = docs.value.filter(doc => {
@@ -404,72 +145,74 @@ const documents = computed(() => {
     allDocs = allDocs.filter(doc => doc.state !== 'needed')
   }
   
-  // Return documents with hasAdjacent flag and completion data
-  return allDocs.map(doc => {
-    const hasAdjacent = hasAdjacentDocs(doc)
-    
-    if (hasAdjacent) {
-      // Calculate completion for documents with adjacent docs
+  return allDocs
+})
+
+// Computed property for main documents (needed or pending state)
+const mainDocuments = computed(() => {
+  return documents.value
+    .filter(doc => doc.state === 'needed' || doc.state === 'pending')
+    .map(doc => {
+      // Calculate completion for main documents
       const relatedPackages = docPackages.value.filter(pkg => pkg.main === doc.docType_id)
       const adjacentDocTypeIds = relatedPackages.map(pkg => pkg.adjacent)
       const adjacentDocs = docs.value.filter(d => adjacentDocTypeIds.includes(d.docType_id))
       
       const mainCompleted = doc.state === 'finished' ? 1 : 0
       const adjacentCompleted = adjacentDocs.filter(d => d.state === 'finished').length
-      const totalDocs = 1 + adjacentDocs.length // main + adjacent
+      const totalDocs = 1 + adjacentDocs.length
       const completedDocs = mainCompleted + adjacentCompleted
       
       return {
         ...doc,
-        hasAdjacent: true,
         completedCount: completedDocs,
         totalCount: totalDocs,
         completionPercentage: totalDocs > 0 ? (completedDocs / totalDocs) * 100 : 0
       }
-    }
-    
-    return {
-      ...doc,
-      hasAdjacent: false
-    }
-  })
+    })
 })
 
-/**
- * Opens the adjacent documents modal for a document with adjacent docs
- */
-function openDocumentModal(doc) {
-  // Find ALL doc_packages for this document (there can be multiple)
-  const relatedPackages = docPackages.value.filter(pkg => pkg.main === doc.docType_id)
-  
-  if (relatedPackages.length === 0) {
-    adjacentModal.adjacentDocs = []
-  } else {
-    // Get all adjacent docType IDs for this document
-    const adjacentDocTypeIds = relatedPackages.map(pkg => pkg.adjacent)
-    
-    // Find all adjacent documents
-    adjacentModal.adjacentDocs = docs.value.filter(d => adjacentDocTypeIds.includes(d.docType_id))
-  }
-  
-  adjacentModal.document = doc
-  adjacentModal.show = true
-}
-
-
-/**
- * Opens upload modal for a document
- */
-function openUploadModal(docId) {
-  uploadModal.docId = docId
-  uploadModal.show = true
-}
+// Computed property for simple documents (all other states)
+const simpleDocuments = computed(() => {
+  return documents.value.filter(doc => doc.state !== 'needed' && doc.state !== 'pending')
+})
 
 // Computed property for available tags
 const availableTags = computed(() => {
   return ['avize', 'CU', 'studii']
 })
 
+/**
+ * Opens the main document modal with adjacent documents
+ */
+function openMainDocModal(doc) {
+  // Find ALL doc_packages for this document (there can be multiple)
+  const relatedPackages = docPackages.value.filter(pkg => pkg.main === doc.docType_id)
+  
+  if (relatedPackages.length === 0) {
+    mainDocModal.adjacentDocs = []
+  } else {
+    // Get all adjacent docType IDs for this document
+    const adjacentDocTypeIds = relatedPackages.map(pkg => pkg.adjacent)
+    
+    // Find all adjacent documents
+    mainDocModal.adjacentDocs = docs.value.filter(d => adjacentDocTypeIds.includes(d.docType_id))
+  }
+  
+  mainDocModal.document = doc
+  mainDocModal.show = true
+}
+
+/**
+ * Opens upload modal for a document
+ */
+function openUploadModal(docId) {
+  // Close main modal if open
+  mainDocModal.show = false
+  
+  uploadModal.docId = docId
+  uploadModal.show = true
+}
 
 /**
  * Formats tag names for display
@@ -484,67 +227,12 @@ function formatTagName(tag) {
 }
 
 /**
- * Converts snake_case document names to Title Case with spaces
- */
-function formatDocumentName(name) {
-  if (!name) return 'Unknown Document'
-  
-  return name
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
-}
-
-/**
- * Gets CSS classes for document state styling
- */
-function getStateColor(state) {
-  const colors = {
-    missing: 'text-red-600',
-    needed: 'text-red-900',
-    pending: 'text-orange-600',
-    filled: 'text-yellow-600',
-    finished: 'text-green-600'
-  }
-  return colors[state] || 'text-gray-600'
-}
-
-/**
- * Checks if destination is an email address
- */
-function isEmail(destination) {
-  if (!destination) return false
-  return destination.includes('@')
-}
-
-/**
- * Opens a link in a new tab
- */
-function openLink(url) {
-  if (!url) return
-  
-  // Add https:// if no protocol is specified
-  let formattedUrl = url
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    formattedUrl = 'https://' + url
-  }
-  
-  window.open(formattedUrl, '_blank')
-}
-
-/**
- * Opens default email client with email address
- */
-function openEmail(email) {
-  if (!email) return
-  
-  window.location.href = 'mailto:' + email
-}
-
-/**
  * Opens a document for viewing by fetching it from MinIO
  */
 async function docOpen(docId) {
+  // Close main modal if open
+  mainDocModal.show = false
+  
   if (!docId) {
     throw new Error('Document ID is required')
   }
@@ -633,7 +321,7 @@ async function docUpload(file, docId) {
       throw new Error('MINIO ERROR')
     })
 
-    // Update document status to modified if upload successful
+    // Update document status to pending if upload successful
     const docIndex = docs.value.findIndex(doc => doc.id === docId)
     if(docIndex !== -1 && docs.value[docIndex].state == 'missing'){
       await fetch(dbApi + '/data/projDocs/' + docId, {
@@ -650,7 +338,7 @@ async function docUpload(file, docId) {
         if (!res.ok) {
           throw new Error('Failed to update document')
         }
-        docs.value[docIndex].isModified = '1'
+        docs.value[docIndex].state = 'pending'
       }).catch(err => {
         console.error('Failed to update document:', err)
         throw new Error('DB ERROR')
@@ -692,12 +380,17 @@ async function finish(docId, isFinished = '1') {
         docs.value[docIndex].state = isFinished === '1' ? 'finished' : 'progress'
       }
       
-      // Update adjacent modal if open
-      if (adjacentModal.show) {
-        const adjacentIndex = adjacentModal.adjacentDocs.findIndex(doc => doc.id === docId)
+      // Update main modal if open
+      if (mainDocModal.show) {
+        const adjacentIndex = mainDocModal.adjacentDocs.findIndex(doc => doc.id === docId)
         if (adjacentIndex !== -1) {
-          adjacentModal.adjacentDocs[adjacentIndex].isFinished = isFinished
-          adjacentModal.adjacentDocs[adjacentIndex].state = isFinished === '1' ? 'finished' : 'progress'
+          mainDocModal.adjacentDocs[adjacentIndex].isFinished = isFinished
+          mainDocModal.adjacentDocs[adjacentIndex].state = isFinished === '1' ? 'finished' : 'progress'
+        }
+        // Update main document if it's the one being finished
+        if (mainDocModal.document?.id === docId) {
+          mainDocModal.document.isFinished = isFinished
+          mainDocModal.document.state = isFinished === '1' ? 'finished' : 'progress'
         }
       }
     })
@@ -710,6 +403,7 @@ async function finish(docId, isFinished = '1') {
  * Fetch project documents and doc_packages data
  */
 const fetchData = async () => {
+  // Set loading state
   loading.value = true
   
   try {
@@ -721,7 +415,6 @@ const fetchData = async () => {
     // Map documents with their document types
     docs.value = docsData.data.map(doc => {
       const docType = docsData.includes?.find(include => include.id === doc.relationships?.docType_id?.data?.id)
-      console.log('DocType for document:', doc.id, docType?.attributes) // Debug log
       return {
         ...doc.attributes,
         id: doc.id,
@@ -730,7 +423,7 @@ const fetchData = async () => {
       }
     })
     
-    // Fetch doc_packages data
+    // Fetch doc_packages data for adjacent document relationships
     const packagesResponse = await fetch(dbApi + '/data/doc_packages')
     if (!packagesResponse.ok) throw new Error('Failed to fetch doc packages')
     const packagesData = await packagesResponse.json()
