@@ -148,6 +148,12 @@ const { error, success } = useUI()
 const loading = ref(true)
 const docTypes = ref([])
 
+// Helper function
+const getDocTypeNameById = (id) => {
+  const docType = docTypes.value.find(dt => dt.id == id)
+  return docType?.name || ''
+}
+
 // Upload modal state
 const uploadTplModal = reactive({
   show: false,

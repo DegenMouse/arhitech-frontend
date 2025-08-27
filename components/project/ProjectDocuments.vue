@@ -95,20 +95,7 @@
             >
               Re-upload
             </button>
-            <button 
-              v-if="!mainDoc.isMainDocument && mainDoc.state === 'progress'"
-              @click="finish(mainDoc.id, '1')"
-              class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded"
-            >
-              Finish
-            </button>
-            <button 
-              v-if="!mainDoc.isMainDocument && mainDoc.state === 'finished'"
-              @click="finish(mainDoc.id, '0')"
-              class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded"
-            >
-              Unfinish
-            </button>
+            
             <button 
               v-if="!mainDoc.isMainDocument && (mainDoc.state === 'missing' || mainDoc.state === 'needed') && mainDoc.docType?.isInput === '1'"
               @click="openUploadModal(mainDoc.id)"
@@ -467,9 +454,6 @@ const mainDocuments = computed(() => {
  * Opens the adjacent documents modal for a main document
  */
 function openMainDocumentModal(mainDoc) {
-  console.log('Opening modal for document:', mainDoc) // Debug log
-  console.log('DocType defined value:', mainDoc.docType?.defined) // Debug log
-  console.log('DocType isInput value:', mainDoc.docType?.isInput) // Debug log
   
   // Find ALL doc_packages for this main document (there can be multiple)
   const relatedPackages = docPackages.value.filter(pkg => pkg.main === mainDoc.docType_id)
