@@ -148,7 +148,7 @@
                 </button>
                 
                 <button 
-                  v-if="Number(doc.docType?.isInput) === 0"
+                  v-if="Number(doc.docType?.isInput) === 1 && doc.state === 'done'"
                   @click="$emit('view', doc.id)" 
                   class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
                 >
@@ -190,7 +190,7 @@ defineEmits(['close', 'upload', 'view', 'mark-sent'])
 
 // Computed properties for progress tracking
 const completedDocsCount = computed(() => {
-  const mainCompleted = props.mainDocument?.state === 'finished' ? 1 : 0
+  const mainCompleted = props.mainDocument?.state === 'done' ? 1 : 0
   const adjacentCompleted = props.adjacentDocs?.filter(doc => doc.state === 'finished').length || 0
   return mainCompleted + adjacentCompleted
 })
@@ -215,7 +215,8 @@ function getStateColor(state) {
     pending: 'text-orange-600',
     done: 'text-green-600',
     rejected: 'text-red-600',
-    processing: 'text-blue-600'
+    processing: 'text-blue-600',
+    missing: 'text-red-600'
   }
   return colors[state] || 'text-gray-600'
 }

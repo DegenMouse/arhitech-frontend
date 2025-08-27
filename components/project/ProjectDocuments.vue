@@ -72,7 +72,7 @@
       :singleFile="true" 
       :docId="uploadModal.docId"
       @close="uploadModal && (uploadModal.show = false)" 
-      @upload="docUpload" 
+      @upload="(file) => docUpload(file, uploadModal.document)" 
     />
 
     <!-- Document viewing modal -->
@@ -115,7 +115,8 @@ const selectedTag = ref('')
 // Modal state management
 const uploadModal = reactive({
   show: false,
-  docId: null
+  docId: null,
+  document: null
 })
 const documentModal = reactive({
   show: false,
@@ -158,8 +159,8 @@ const mainDocuments = computed(() => {
       const adjacentDocTypeIds = relatedPackages.map(pkg => pkg.adjacent)
       const adjacentDocs = docs.value.filter(d => adjacentDocTypeIds.includes(d.docType_id))
       
-      const mainCompleted = doc.state === 'finished' ? 1 : 0
-      const adjacentCompleted = adjacentDocs.filter(d => d.state === 'finished').length
+      const mainCompleted = doc.state === 'done' ? 1 : 0
+      const adjacentCompleted = adjacentDocs.filter(d => d.state === 'done').length
       const totalDocs = 1 + adjacentDocs.length
       const completedDocs = mainCompleted + adjacentCompleted
       
@@ -211,6 +212,7 @@ function openUploadModal(document) {
   mainDocModal.show = false
   
   uploadModal.docId = document.id
+  uploadModal.document = document
   uploadModal.show = true
 }
 
@@ -356,16 +358,50 @@ async function docUpload(file, document) {
       console.err(err)
       throw new Error('MINIO ERROR')
     })
-
+    console.log("document.id", document.id)
     // Determine new state based on AI parsability (static config)
     let newState = 'done' // Default state for non-AI documents
     
     if (Number(document.docType?.aiParsable) === 1) {
       // This document type is AI parsable
       newState = 'processing'
-      console.log("AI")
-      // Future: Could trigger AI processing for this docType
-    }
+      
+      // Trigger AI processing based on docType ID
+      let payload
+      if (Number(document.docType_id) === 55 || Number(document.docType_id) === 38) {
+        // CU task for specific document types
+        payload = {
+          "task": "CU",
+          "data": {
+            "company_id": company.value.id,
+            "project_id": props.project.id,
+            "projDoc_id": document.id,
+            "docType": "certificat_urbanistic"
+          }
+        }
+      } else {
+        // Data extraction for all other AI documents
+        payload = {
+          "task": "dataExtraction",
+          "data": {
+            "company_id": company.value.id,
+            "project_id": props.project.id,
+            "projDoc_id": document.id,
+            "docType": document.docType?.name
+          }
+        }
+      }
+
+      // Call AI processing API (non-blocking to avoid CORS issues stopping upload)
+      fetch('http://gamma.softaccel.net/api/docs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(error => {
+        console.error('AI processing trigger failed:', error)
+        console.log("Failed payload:", payload)
+      })
+  }
     
     // Update document state
     await updateDocumentState(document.id, newState)

@@ -98,8 +98,6 @@ function getStateColor(state) {
     missing: 'text-red-600',
     needed: 'text-red-900',
     pending: 'text-orange-600',
-    filled: 'text-yellow-600',
-    finished: 'text-green-600',
     done: 'text-green-600',
     empty: 'text-gray-600'
   }
