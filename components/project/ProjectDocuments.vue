@@ -63,7 +63,7 @@
       @close="mainDocModal.show = false"
       @upload="openUploadModal"
       @view="docOpen"
-      @finish="finish"
+      @mark-sent="markAsSent"
     />
 
     <!-- File upload modal -->
@@ -353,9 +353,9 @@ async function docUpload(file, docId) {
 }
 
 /**
- * Updates document finish status
+ * Marks document as sent (sets state to pending)
  */
-async function finish(docId, isFinished = '1') {
+async function markAsSent(docId) {
   try {
     await fetch(dbApi + '/data/projDocs/' + docId, {
       method: 'PATCH',
@@ -363,8 +363,7 @@ async function finish(docId, isFinished = '1') {
         data: {
           id: docId,
           attributes: {
-            isFinished: isFinished,
-            state: isFinished === '1' ? 'finished' : 'progress'
+            state: 'pending'
           }
         }
       })
@@ -376,26 +375,19 @@ async function finish(docId, isFinished = '1') {
       // Update local state
       const docIndex = docs.value.findIndex(doc => doc.id === docId)
       if (docIndex !== -1) {
-        docs.value[docIndex].isFinished = isFinished
-        docs.value[docIndex].state = isFinished === '1' ? 'finished' : 'progress'
+        docs.value[docIndex].state = 'pending'
       }
       
       // Update main modal if open
-      if (mainDocModal.show) {
-        const adjacentIndex = mainDocModal.adjacentDocs.findIndex(doc => doc.id === docId)
-        if (adjacentIndex !== -1) {
-          mainDocModal.adjacentDocs[adjacentIndex].isFinished = isFinished
-          mainDocModal.adjacentDocs[adjacentIndex].state = isFinished === '1' ? 'finished' : 'progress'
-        }
-        // Update main document if it's the one being finished
-        if (mainDocModal.document?.id === docId) {
-          mainDocModal.document.isFinished = isFinished
-          mainDocModal.document.state = isFinished === '1' ? 'finished' : 'progress'
-        }
+      if (mainDocModal.show && mainDocModal.document?.id === docId) {
+        mainDocModal.document.state = 'pending'
       }
+      
+      // Show success message
+      success.value.message = "Document marked as sent successfully"
     })
   } catch (error) {
-    console.error('Failed to update document:', error)
+    console.error('Failed to mark document as sent:', error)
   }
 }
 

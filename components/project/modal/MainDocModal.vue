@@ -46,15 +46,6 @@
                 {{ mainDocument?.state }}
               </span>
               
-              <!-- Main document action buttons -->
-              <button 
-                v-if="mainDocument?.state === 'needed'"
-                @click="$emit('upload', mainDocument?.id)" 
-                class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-              >
-                Upload
-              </button>
-              
               <button 
                 v-if="(mainDocument?.state === 'done' || mainDocument?.state === 'rejected')"
                 @click="$emit('upload', mainDocument?.id)" 
@@ -63,12 +54,69 @@
                 Re-upload
               </button>
               
+            </div>
+          </div>
+        </div>
+        
+        <!-- Destination Section -->
+        <div v-if="mainDocument?.docType?.destination" class="border-b border-gray-300 p-6">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-lg">🔗</span>
+            <h3 class="font-semibold text-gray-900">Destinație</h3>
+          </div>
+          <div class="border-b border-gray-200 mb-4"></div>
+          
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <svg v-if="!isEmail(mainDocument?.docType?.destination)" class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <svg v-else class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+              <span class="text-sm text-gray-700">
+                {{ isEmail(mainDocument?.docType?.destination) ? 'Trimite cererea pe email' : 'Completează cererea pe site-ul' }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <!-- Upload button for pending state -->
               <button 
-                v-if="mainDocument?.state === 'progress'"
-                @click="$emit('finish', mainDocument?.id, '1')" 
+                v-if="mainDocument?.state === 'pending'"
+                @click="$emit('upload', mainDocument?.id)" 
                 class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
               >
-                Finish
+                Upload
+              </button>
+              
+              <!-- Destination buttons -->
+              <button 
+                v-if="!isEmail(mainDocument?.docType?.destination)"
+                @click="openLink(mainDocument?.docType?.destination)" 
+                class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded flex items-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+                Vizitează Link
+              </button>
+              <button 
+                v-else
+                @click="openEmail(mainDocument?.docType?.destination)" 
+                class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded flex items-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                Trimite Email
+              </button>
+              <button 
+                @click="$emit('mark-sent', mainDocument?.id)"
+                class="px-3 py-1 bg-blue-800 hover:bg-blue-900 text-white text-sm rounded flex items-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Marchează trimis
               </button>
             </div>
           </div>
@@ -123,21 +171,6 @@
                   Re-upload
                 </button>
                 
-                <button 
-                  v-if="doc.state === 'progress'"
-                  @click="$emit('finish', doc.id, '1')" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-                >
-                  Finish
-                </button>
-                
-                <button 
-                  v-if="doc.state === 'finished'"
-                  @click="$emit('finish', doc.id, '0')" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-                >
-                  Unfinish
-                </button>
               </div>
             </div>
           </div>
@@ -161,7 +194,7 @@ const props = defineProps({
 })
 
 // Component emits
-defineEmits(['close', 'upload', 'view', 'finish'])
+defineEmits(['close', 'upload', 'view', 'mark-sent'])
 
 // Computed properties for progress tracking
 const completedDocsCount = computed(() => {
@@ -194,5 +227,28 @@ function getStateColor(state) {
     progress: 'text-blue-600'
   }
   return colors[state] || 'text-gray-600'
+}
+
+function isEmail(destination) {
+  if (!destination) return false
+  return destination.includes('@')
+}
+
+function openLink(url) {
+  if (!url) return
+  
+  // Add https:// if no protocol is specified
+  let formattedUrl = url
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    formattedUrl = 'https://' + url
+  }
+  
+  window.open(formattedUrl, '_blank')
+}
+
+function openEmail(email) {
+  if (!email) return
+  
+  window.location.href = 'mailto:' + email
 }
 </script>
