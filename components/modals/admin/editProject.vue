@@ -58,6 +58,21 @@
           />
         </div>
 
+        <!-- Person type dropdown -->
+        <div>
+          <label for="personType" class="block text-sm font-medium text-gray-700 mb-2">
+            Forma Juridica *
+          </label>
+          <select
+            id="personType"
+            v-model="project.persoana_fizica"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option :value="1">Persoana fizica</option>
+            <option :value="0">Persoana juridica</option>
+          </select>
+        </div>
+
         <!-- Team members selection with checkboxes -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -136,6 +151,7 @@ const props = defineProps({
     default: () => ({
       name: '',
       deadline: '',
+      persoana_fizica: 1,
       usersInProject: []
     })
   }
@@ -193,6 +209,7 @@ const handleSubmit = async () => {
             ...(props.isNew ? {} : { id: project.id }),
             name: project.name,
             deadline: project.deadline,
+            persoana_fizica: project.persoana_fizica,
             company_id: company.value.id,
             admin_id: auth.value.id
           }

@@ -8,6 +8,23 @@
 -->
 <template>
   <div>
+    <!-- Filter dropdown -->
+    <div class="mb-6">
+      <label for="tag-filter" class="block text-sm font-medium text-gray-700 mb-2">
+        Filtrează după tip document:
+      </label>
+      <select
+        id="tag-filter"
+        v-model="selectedTag"
+        class="block w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+      >
+        <option value="">Toate documentele</option>
+        <option v-for="tag in availableTags" :key="tag" :value="tag">
+          {{ formatTagName(tag) }}
+        </option>
+      </select>
+    </div>
+
     <!-- Loading state -->
     <div v-if="loading" class="space-y-4">
       <div v-for="i in 3" :key="i" class="animate-pulse">
@@ -15,45 +32,79 @@
       </div>
     </div>
     
-    <!-- Main documents grid -->
-    <div v-else-if="mainDocuments.length" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <!-- Documents grid -->
+    <div v-if="documents.length" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <div 
-        v-for="mainDoc in mainDocuments" 
-        :key="mainDoc.id" 
-        class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-        @click="openMainDocumentModal(mainDoc)"
+        v-for="doc in documents" 
+        :key="doc.id" 
+        class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+        :class="{ 'cursor-pointer': doc.hasAdjacent }"
+        @click="doc.hasAdjacent ? openDocumentModal(doc) : null"
       >
-        <!-- Main document header -->
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-medium text-gray-900">{{ formatDocumentName(mainDoc.docType?.name) }}</h3>
-          <span 
-            :class="getStateColor(mainDoc.state)" 
-            class="px-2 py-1 text-xs font-medium rounded-full"
-          >
-            {{ mainDoc.state }}
-          </span>
-        </div>
-        
-        <!-- Completion progress bar -->
-        <div class="space-y-2">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">Documente necesare</span>
-            <span class="font-medium text-gray-900">
-              {{ mainDoc.completedCount }}/{{ mainDoc.totalCount }}
+        <!-- Document layout with consistent structure -->
+        <div class="flex flex-col h-full">
+          <!-- Document name and status row -->
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <h3 class="font-medium text-gray-900 flex-1">{{ formatDocumentName(doc.docType?.name) }}</h3>
+            <span 
+              :class="getStateColor(doc.state)" 
+              class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap flex-shrink-0"
+            >
+              {{ doc.state }}
             </span>
           </div>
           
-          <!-- Progress bar -->
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              class="h-2 rounded-full transition-all duration-300"
-              :class="mainDoc.completionPercentage === 100 ? 'bg-green-500' : 'bg-blue-500'"
-              :style="`width: ${mainDoc.completionPercentage}%`"
-            ></div>
+          <!-- Progress bar for documents with adjacent docs -->
+          <div v-if="doc.hasAdjacent" class="space-y-2 mb-4">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Documente necesare</span>
+              <span class="font-medium text-gray-900">
+                {{ doc.completedCount }}/{{ doc.totalCount }}
+              </span>
+            </div>
+            
+            <!-- Progress bar -->
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                class="h-2 rounded-full transition-all duration-300"
+                :class="doc.completionPercentage === 100 ? 'bg-green-500' : 'bg-blue-500'"
+                :style="`width: ${doc.completionPercentage}%`"
+              ></div>
+            </div>
+            
+            <div class="text-xs text-gray-500">
+              {{ Math.round(doc.completionPercentage) }}% Complete
+            </div>
           </div>
           
-          <div class="text-xs text-gray-500">
-            {{ Math.round(mainDoc.completionPercentage) }}% Complete
+          <!-- Spacer to push buttons to bottom -->
+          <div class="flex-1"></div>
+          
+          <!-- Action buttons at bottom -->
+          <div class="flex flex-wrap gap-2 mt-auto">
+            <button 
+              v-if="doc.docType?.isInput === '0'"
+              @click.stop="docOpen(doc.id)"
+              class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
+            >
+              View
+            </button>
+            <button 
+              v-if="!doc.hasAdjacent && doc.state === 'progress' && doc.docType?.isInput === '1'"
+              @click.stop="openUploadModal(doc.id)"
+              class="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white text-sm rounded"
+            >
+              Re-upload
+            </button>
+            
+            <button 
+              v-if="!doc.hasAdjacent && (doc.state === 'missing' || doc.state === 'needed') && doc.docType?.isInput === '1'"
+              @click.stop="openUploadModal(doc.id)"
+              class="px-3 py-1 text-white text-sm rounded hover:opacity-90"
+              style="background-color: #0c47b0;"
+            >
+              Upload
+            </button>
           </div>
         </div>
       </div>
@@ -61,7 +112,7 @@
     
     <!-- Empty state -->
     <div v-else class="text-center py-8 text-gray-500">
-      <p>No main documents found</p>
+      <p>No documents found</p>
     </div>
 
   <!-- Adjacent Documents Modal -->
@@ -75,7 +126,7 @@
       <div class="sticky top-0 bg-white border-b px-6 py-4">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-xl font-semibold text-gray-900">
-            {{ formatDocumentName(adjacentModal.mainDocument?.docType?.name) || 'Main Document' }}
+            {{ formatDocumentName(adjacentModal.document?.docType?.name) || 'Document' }}
           </h2>
           <button 
             @click="adjacentModal && (adjacentModal.show = false)"
@@ -87,7 +138,7 @@
           </button>
         </div>
         <div v-if="adjacentModal" class="text-sm text-gray-600">
-          [ {{ (adjacentModal.adjacentDocs?.filter(doc => doc.state === 'finished').length || 0) + (adjacentModal.mainDocument?.state === 'finished' ? 1 : 0) }}/{{ (adjacentModal.adjacentDocs?.length || 0) + 1 }} Confirmate ]
+          [ {{ (adjacentModal.adjacentDocs?.filter(doc => doc.state === 'finished').length || 0) + (adjacentModal.document?.state === 'finished' ? 1 : 0) }}/{{ (adjacentModal.adjacentDocs?.length || 0) + 1 }} Confirmate ]
         </div>
       </div>
       
@@ -102,49 +153,92 @@
           <div class="border-b border-gray-200 mb-4"></div>
           
           <div class="flex items-center justify-between">
-            <div>
-              <div class="font-medium text-gray-900 mb-1">
-                {{ formatDocumentName(adjacentModal?.mainDocument?.docType?.name) }}
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-600">Status:</span>
-                <span 
-                  :class="getStateColor(adjacentModal?.mainDocument?.state)"
-                  class="text-sm font-medium capitalize"
+            <div class="font-medium text-gray-900 mb-1 flex-1">
+              {{ formatDocumentName(adjacentModal?.document?.docType?.name) }}
+            </div>
+            <div class="flex items-center gap-2 ">
+              <span 
+                :class="getStateColor(adjacentModal?.document?.state)"
+                class="text-sm font-medium capitalize mr-4"
+              >
+                {{ adjacentModal?.document?.state }}
+              </span>
+                <button 
+                  v-if="(adjacentModal?.document?.state === 'needed' || adjacentModal?.document?.state === 'missing') && adjacentModal?.document?.docType?.isInput === '1'"
+                  @click="openUploadModal(adjacentModal?.document?.id)" 
+                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
                 >
-                  {{ adjacentModal?.mainDocument?.state }}
-                </span>
+                  Upload
+                </button>
+                <button 
+                  v-if="adjacentModal?.document?.docType?.isInput === '0'"
+                  @click="docOpen(adjacentModal?.document?.id)" 
+                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
+                >
+                  View
+                </button>
+                <button 
+                  v-if="adjacentModal?.document?.state === 'progress' && adjacentModal?.document?.docType?.isInput === '1'"
+                  @click="openUploadModal(adjacentModal?.document?.id)" 
+                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
+                >
+                  Re-upload
+                </button>
+                <button 
+                  v-if="adjacentModal?.document?.state === 'progress'"
+                  @click="finish(adjacentModal?.document?.id, '1')" 
+                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
+                >
+                  Finish
+                </button>
               </div>
             </div>
-            <div class="flex gap-2">
-              <button 
-                v-if="adjacentModal?.mainDocument?.state === 'missing'"
-                @click="openUploadModal(adjacentModal?.mainDocument?.id)" 
-                class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-              >
-                Upload
-              </button>
-              <button 
-                v-if="adjacentModal?.mainDocument?.state !== 'missing' && adjacentModal?.adjacentDocs?.every(doc => doc.state === 'finished')"
-                @click="docOpen(adjacentModal?.mainDocument?.id)" 
-                class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-              >
-                View
-              </button>
-              <button 
-                v-if="adjacentModal?.mainDocument?.state !== 'missing' && adjacentModal?.adjacentDocs?.every(doc => doc.state === 'finished')"
-                @click="openUploadModal(adjacentModal?.mainDocument?.id)" 
-                class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-              >
-                Re-upload
-              </button>
-              <button 
-                v-if="adjacentModal?.mainDocument?.state === 'progress'"
-                @click="finish(adjacentModal?.mainDocument?.id, '1')" 
-                class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-              >
-                Finish
-              </button>
+          </div>
+          
+          <!-- Destination Section -->
+          <div v-if="adjacentModal?.document?.docType?.destination" class="mt-3 px-6">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <svg v-if="!isEmail(adjacentModal?.document?.docType?.destination)" class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <svg v-else class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                <span class="text-sm text-gray-700">
+                  {{ isEmail(adjacentModal?.document?.docType?.destination) ? 'Trimite cererea pe email' : 'Completează cererea pe site-ul' }}
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button 
+                  v-if="!isEmail(adjacentModal?.document?.docType?.destination)"
+                  @click="openLink(adjacentModal?.document?.docType?.destination)" 
+                  class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded flex items-center gap-2"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                  </svg>
+                  Vizitează Link
+                </button>
+                <button 
+                  v-else
+                  @click="openEmail(adjacentModal?.document?.docType?.destination)" 
+                  class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded flex items-center gap-2"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                  </svg>
+                  Trimite Email
+                </button>
+                <button 
+                  class="px-3 py-1 bg-blue-800 hover:bg-blue-900 text-white text-sm rounded flex items-center gap-2"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  Marchează trimis
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -174,21 +268,21 @@
               </div>
               <div class="flex gap-2 ml-4">
                 <button 
-                  v-if="doc.state === 'missing'"
+                  v-if="(doc.state === 'missing' || doc.state === 'needed') && doc.docType?.isInput === '1'"
                   @click="openUploadModal(doc.id)" 
                   class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
                 >
                   Upload
                 </button>
                 <button 
-                  v-if="doc.state !== 'missing'"
+                  v-if="doc.docType?.isInput === '0'"
                   @click="docOpen(doc.id)" 
                   class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
                 >
-                  Open
+                  View
                 </button>
                 <button 
-                  v-if="doc.state === 'progress'"
+                  v-if="doc.state === 'progress' && doc.docType?.isInput === '1'"
                   @click="openUploadModal(doc.id)" 
                   class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
                 >
@@ -212,9 +306,24 @@
             </div>
           </div>
         </div>
+        
+        <!-- Undefined Document Warning (at bottom) -->
+        <div v-if="adjacentModal?.document?.docType?.defined === 0 || adjacentModal?.document?.docType?.defined === '0'" class="border-t border-gray-200 p-4 bg-amber-50">
+          <div class="flex items-start">
+            <div class="flex-shrink-0">
+              <svg class="w-4 h-4 text-amber-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <div class="ml-2">
+              <p class="text-xs text-amber-700">
+                <strong>Notă:</strong> Acest document nu există momentan în baza de date ArhiTech. Documentele asociate necesare nu sunt încă definite. Tipul de document va fi disponibil la următorul update.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
   </div>
 
   <!-- File upload modal -->
@@ -255,6 +364,7 @@ const { success } = useUI()
 const docs = ref([])
 const docPackages = ref([])
 const loading = ref(true)
+const selectedTag = ref('')
 
 // Modal state management
 const uploadModal = reactive({
@@ -269,74 +379,83 @@ const documentModal = reactive({
 })
 const adjacentModal = reactive({
   show: false,
-  mainDocument: null,
+  document: null,
   adjacentDocs: []
 })
 
-// Computed property for main documents
-const mainDocuments = computed(() => {
-  // Filter documents that are "needed" state and appear as "main" in doc_packages
-  const mainDocs = docs.value.filter(doc => {
-    return doc.state === 'needed' 
+// Helper function to check if a document has adjacent documents
+function hasAdjacentDocs(doc) {
+  return docPackages.value.some(pkg => pkg.main === doc.docType_id)
+}
+
+// Computed property for all documents
+const documents = computed(() => {
+  // Get documents based on filter selection
+  let allDocs = docs.value.filter(doc => {
+    return doc.state // Any document with a state
   })
   
-  // Add completion data for each main document
-  return mainDocs.map(mainDoc => {
-    // Find ALL doc_packages for this main document (there can be multiple)
-    const relatedPackages = docPackages.value.filter(pkg => pkg.main === mainDoc.docType_id)
+  // Apply tag filter if selected, or exclude 'needed' if showing all
+  if (selectedTag.value) {
+    // When specific tag is selected, show all documents with that tag
+    allDocs = allDocs.filter(doc => doc.docType?.tag === selectedTag.value)
+  } else {
+    // When showing "Toate documentele", exclude 'needed' state documents
+    allDocs = allDocs.filter(doc => doc.state !== 'needed')
+  }
+  
+  // Return documents with hasAdjacent flag and completion data
+  return allDocs.map(doc => {
+    const hasAdjacent = hasAdjacentDocs(doc)
     
-    if (relatedPackages.length === 0) {
-      // Only main document, no adjacent documents
-      const isMainDocCompleted = mainDoc.state === 'finished' ? 1 : 0
+    if (hasAdjacent) {
+      // Calculate completion for documents with adjacent docs
+      const relatedPackages = docPackages.value.filter(pkg => pkg.main === doc.docType_id)
+      const adjacentDocTypeIds = relatedPackages.map(pkg => pkg.adjacent)
+      const adjacentDocs = docs.value.filter(d => adjacentDocTypeIds.includes(d.docType_id))
+      
+      const mainCompleted = doc.state === 'finished' ? 1 : 0
+      const adjacentCompleted = adjacentDocs.filter(d => d.state === 'finished').length
+      const totalDocs = 1 + adjacentDocs.length // main + adjacent
+      const completedDocs = mainCompleted + adjacentCompleted
+      
       return {
-        ...mainDoc,
-        completedCount: isMainDocCompleted,
-        totalCount: 1,
-        completionPercentage: isMainDocCompleted * 100
+        ...doc,
+        hasAdjacent: true,
+        completedCount: completedDocs,
+        totalCount: totalDocs,
+        completionPercentage: totalDocs > 0 ? (completedDocs / totalDocs) * 100 : 0
       }
     }
     
-    // Get all adjacent docType IDs for this main document
-    const adjacentDocTypeIds = relatedPackages.map(pkg => pkg.adjacent)
-    
-    // Find all adjacent documents for this main document
-    const adjacentDocs = docs.value.filter(doc => adjacentDocTypeIds.includes(doc.docType_id))
-    const completedAdjacentDocs = adjacentDocs.filter(doc => doc.state === 'finished')
-    
-    // Include main document in completion calculation
-    const isMainDocCompleted = mainDoc.state === 'finished' ? 1 : 0
-    const totalDocs = adjacentDocs.length + 1 // +1 for main document
-    const completedDocs = completedAdjacentDocs.length + isMainDocCompleted
-    
     return {
-      ...mainDoc,
-      completedCount: completedDocs,
-      totalCount: totalDocs,
-      completionPercentage: (completedDocs / totalDocs) * 100
+      ...doc,
+      hasAdjacent: false
     }
   })
 })
 
 /**
- * Opens the adjacent documents modal for a main document
+ * Opens the adjacent documents modal for a document with adjacent docs
  */
-function openMainDocumentModal(mainDoc) {
-  // Find ALL doc_packages for this main document (there can be multiple)
-  const relatedPackages = docPackages.value.filter(pkg => pkg.main === mainDoc.docType_id)
+function openDocumentModal(doc) {
+  // Find ALL doc_packages for this document (there can be multiple)
+  const relatedPackages = docPackages.value.filter(pkg => pkg.main === doc.docType_id)
   
   if (relatedPackages.length === 0) {
     adjacentModal.adjacentDocs = []
   } else {
-    // Get all adjacent docType IDs for this main document
+    // Get all adjacent docType IDs for this document
     const adjacentDocTypeIds = relatedPackages.map(pkg => pkg.adjacent)
     
     // Find all adjacent documents
-    adjacentModal.adjacentDocs = docs.value.filter(doc => adjacentDocTypeIds.includes(doc.docType_id))
+    adjacentModal.adjacentDocs = docs.value.filter(d => adjacentDocTypeIds.includes(d.docType_id))
   }
   
-  adjacentModal.mainDocument = mainDoc
+  adjacentModal.document = doc
   adjacentModal.show = true
 }
+
 
 /**
  * Opens upload modal for a document
@@ -344,6 +463,24 @@ function openMainDocumentModal(mainDoc) {
 function openUploadModal(docId) {
   uploadModal.docId = docId
   uploadModal.show = true
+}
+
+// Computed property for available tags
+const availableTags = computed(() => {
+  return ['avize', 'CU', 'studii']
+})
+
+
+/**
+ * Formats tag names for display
+ */
+function formatTagName(tag) {
+  const tagNames = {
+    'avize': 'Avize',
+    'CU': 'Certificat de Urbanism',
+    'studii': 'Studii'
+  }
+  return tagNames[tag] || tag
 }
 
 /**
@@ -370,6 +507,38 @@ function getStateColor(state) {
     finished: 'text-green-600'
   }
   return colors[state] || 'text-gray-600'
+}
+
+/**
+ * Checks if destination is an email address
+ */
+function isEmail(destination) {
+  if (!destination) return false
+  return destination.includes('@')
+}
+
+/**
+ * Opens a link in a new tab
+ */
+function openLink(url) {
+  if (!url) return
+  
+  // Add https:// if no protocol is specified
+  let formattedUrl = url
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    formattedUrl = 'https://' + url
+  }
+  
+  window.open(formattedUrl, '_blank')
+}
+
+/**
+ * Opens default email client with email address
+ */
+function openEmail(email) {
+  if (!email) return
+  
+  window.location.href = 'mailto:' + email
 }
 
 /**
@@ -552,6 +721,7 @@ const fetchData = async () => {
     // Map documents with their document types
     docs.value = docsData.data.map(doc => {
       const docType = docsData.includes?.find(include => include.id === doc.relationships?.docType_id?.data?.id)
+      console.log('DocType for document:', doc.id, docType?.attributes) // Debug log
       return {
         ...doc.attributes,
         id: doc.id,
