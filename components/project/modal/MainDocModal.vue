@@ -46,6 +46,15 @@
                 {{ mainDocument?.state }}
               </span>
               
+              <!-- Edit button for output documents in inProgress state -->
+              <button 
+                v-if="mainDocument?.state === 'inProgress' && Number(mainDocument?.docType?.isInput) === 0"
+                @click="$emit('edit', mainDocument.id)" 
+                class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded"
+              >
+                Edit
+              </button>
+              
               <button 
                 v-if="(mainDocument?.state === 'done' || mainDocument?.state === 'rejected')"
                 @click="$emit('upload', mainDocument)" 
@@ -161,6 +170,15 @@
                 >
                   Re-upload
                 </button>
+                
+                <!-- Edit button for output documents in inProgress state -->
+                <button 
+                  v-if="doc.state === 'inProgress' && Number(doc.docType?.isInput) === 0"
+                  @click="$emit('edit', doc.id)" 
+                  class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded"
+                >
+                  Edit
+                </button>
               </div>
             </div>
           </div>
@@ -184,7 +202,7 @@ const props = defineProps({
 })
 
 // Component emits
-defineEmits(['close', 'upload', 'view', 'mark-sent'])
+defineEmits(['close', 'upload', 'view', 'mark-sent', 'edit'])
 
 // Computed properties for progress tracking
 const completedDocsCount = computed(() => {

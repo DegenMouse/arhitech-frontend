@@ -65,6 +65,7 @@
       @upload="openUploadModal"
       @view="docOpen"
       @mark-sent="markAsSent"
+      @edit="docEdit"
     />
 
     <!-- File upload modal -->
@@ -83,7 +84,7 @@
       :url="documentModal.url"
       :docId="documentModal.docId"
       @close="documentModal && (documentModal.show = false)"
-      @change="docUpload"
+      @change="(file) => docUpload(file, documentModal.document)"
     />
   </div>
 </template>
@@ -123,7 +124,8 @@ const documentModal = reactive({
   show: false,
   isPdf: true,
   url: null,
-  docId: null
+  docId: null,
+  document: null
 })
 const mainDocModal = reactive({
   show: false,
@@ -289,8 +291,8 @@ async function docEdit(docId) {
         return res.json()
       })
 
-    // Store the document for upload callback
-    uploadModal.document = document
+    // Store the document in documentModal (not uploadModal to avoid conflicts)
+    documentModal.document = document
     
     // Open the edit modal
     documentModal.url = minioUrl.url
