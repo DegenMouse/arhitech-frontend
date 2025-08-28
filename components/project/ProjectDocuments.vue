@@ -47,6 +47,7 @@
         :document="doc"
         @upload="openUploadModal"
         @view="docOpen"
+        @edit="docEdit"
       />
     </div>
     
@@ -256,6 +257,48 @@ async function docOpen(docId) {
     documentModal.show = true
   } catch (error) {
     console.error('Error opening document:', error)
+  }
+}
+
+/**
+ * Opens a document for editing by fetching it from MinIO
+ */
+async function docEdit(docId) {
+  // Close main modal if open
+  mainDocModal.show = false
+  
+  if (!docId) {
+    throw new Error('Document ID is required')
+  }
+
+  // Find the document object
+  const document = docs.value.find(doc => doc.id === docId)
+  if (!document) {
+    throw new Error('Document not found')
+  }
+
+  const bucket = useRuntimeConfig().public.buckets.companyFiles
+  const path = `${company.value.id}/projects/${props.project.id}/${docId}`
+
+  try {
+    const minioUrl = await fetch(`/api/minio-get?path=${encodeURIComponent(path)}&bucket=${bucket}`)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to get presigned URL')
+        }
+        return res.json()
+      })
+
+    // Store the document for upload callback
+    uploadModal.document = document
+    
+    // Open the edit modal
+    documentModal.url = minioUrl.url
+    documentModal.docId = docId
+    documentModal.isPdf = true
+    documentModal.show = true
+  } catch (error) {
+    console.error('Error opening document for editing:', error)
   }
 }
 

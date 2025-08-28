@@ -86,7 +86,7 @@ const props = defineProps({
 })
 
 // Component emits
-defineEmits(['upload', 'view'])
+const emit = defineEmits(['upload', 'view', 'edit'])
 
 // Helper functions
 function formatDocumentName(name) {
@@ -111,6 +111,7 @@ function getStateColor(state) {
 }
 
 function handleGenerate() {
-  console.log('Hello 1')
+  // Emit edit event with document id
+  emit('edit', props.document.id)
 }
 </script>
