@@ -286,6 +286,7 @@ async function updateDocumentState(docId, newState) {
       
       // Update main modal if open and matches this document
       if (mainDocModal.show && mainDocModal.document?.id === docId) {
+        console.log('UPDATING MODAL DOCUMENT STATE!')
         mainDocModal.document.state = newState
       }
     })

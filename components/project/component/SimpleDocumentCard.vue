@@ -55,11 +55,11 @@
         <template v-if="Number(document.docType?.isInput) === 0">
           <!-- Empty state: Generate button -->
           <button 
-            v-if="document.state === 'empty'"
+            v-if="document.state === 'inProgress'"
             @click="handleGenerate"
             class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded"
           >
-            Generate
+            Edit
           </button>
           
           <!-- Done state: View button -->
