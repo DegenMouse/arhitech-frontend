@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="border-2 border-gray-400 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer hover:border-gray-500"
+    class="border-2 border-gray-300 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer hover:border-gray-400"
     @click="$emit('open-modal', document)"
   >
     <div class="flex flex-col h-full">

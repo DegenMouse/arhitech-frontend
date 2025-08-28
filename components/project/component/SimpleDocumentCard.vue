@@ -2,8 +2,8 @@
   <div :class="[
     'border-2 rounded-lg p-4 hover:shadow-md transition-shadow',
     document.state === 'done' 
-      ? 'border-green-400 bg-green-50 hover:border-green-500' 
-      : 'border-gray-400 hover:border-gray-500'
+      ? 'border-green-300 bg-green-50 hover:border-green-400' 
+      : 'border-gray-300 hover:border-gray-400'
   ]">
     <div class="flex flex-col h-full">
       <!-- Document name and status row -->
