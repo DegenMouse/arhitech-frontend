@@ -55,6 +55,15 @@
                 Edit
               </button>
               
+              <!-- Process with AI button for AI-parsable output documents -->
+              <button 
+                v-if="mainDocument?.state === 'done' && Number(mainDocument?.docType?.isInput) === 0 && Number(mainDocument?.docType?.aiParsable) === 1"
+                @click="$emit('process-ai', mainDocument)" 
+                class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded"
+              >
+                Process with AI
+              </button>
+              
               <button 
                 v-if="(mainDocument?.state === 'done' || mainDocument?.state === 'rejected')"
                 @click="$emit('upload', mainDocument)" 
@@ -179,6 +188,15 @@
                 >
                   Edit
                 </button>
+                
+                <!-- Process with AI button for AI-parsable output documents -->
+                <button 
+                  v-if="doc.state === 'done' && Number(doc.docType?.isInput) === 0 && Number(doc.docType?.aiParsable) === 1"
+                  @click="$emit('process-ai', doc)" 
+                  class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded"
+                >
+                  Process with AI
+                </button>
               </div>
             </div>
           </div>
@@ -202,7 +220,7 @@ const props = defineProps({
 })
 
 // Component emits
-defineEmits(['close', 'upload', 'view', 'mark-sent', 'edit'])
+defineEmits(['close', 'upload', 'view', 'mark-sent', 'edit', 'process-ai'])
 
 // Computed properties for progress tracking
 const completedDocsCount = computed(() => {

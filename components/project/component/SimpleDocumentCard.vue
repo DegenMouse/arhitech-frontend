@@ -70,6 +70,15 @@
           >
             View
           </button>
+          
+          <!-- Process with AI button (for AI parsable output documents) -->
+          <button 
+            v-if="Number(document.docType?.aiParsable) === 1"
+            @click="$emit('process-ai', document)"
+            class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded"
+          >
+            Process with AI
+          </button>
         </template>
       </div>
     </div>
@@ -86,7 +95,7 @@ const props = defineProps({
 })
 
 // Component emits
-const emit = defineEmits(['upload', 'view', 'edit'])
+const emit = defineEmits(['upload', 'view', 'edit', 'process-ai'])
 
 // Helper functions
 function formatDocumentName(name) {

@@ -48,6 +48,7 @@
         @upload="openUploadModal"
         @view="docOpen"
         @edit="docEdit"
+        @process-ai="processWithAI"
       />
     </div>
     
@@ -66,6 +67,7 @@
       @view="docOpen"
       @mark-sent="markAsSent"
       @edit="docEdit"
+      @process-ai="processWithAI"
     />
 
     <!-- File upload modal -->
@@ -406,47 +408,50 @@ async function docUpload(file, document) {
     })
     console.log("document.id", document.id)
     // Determine new state based on AI parsability (static config)
-    let newState = 'done' // Default state for non-AI documents
     
-    if (Number(document.docType?.aiParsable) === 1) {
-      // This document type is AI parsable
-      newState = 'processing'
+    if(Number(document.docType?.isInput) === 1){
+      let newState = 'done' // Default state for non-AI documents
       
-      // Trigger AI processing based on docType ID
-      let payload
-      if (Number(document.docType_id) === 55 || Number(document.docType_id) === 38) {
-        // CU task for specific document types
-        payload = {
-          "task": "CU",
-          "data": {
-            "company_id": company.value.id,
-            "project_id": props.project.id,
-            "projDoc_id": document.id,
-            "docType": "certificat_urbanistic"
+      if (Number(document.docType?.aiParsable) === 1) {
+        // This document type is AI parsable
+        newState = 'processing'
+        
+        // Trigger AI processing based on docType ID
+        let payload
+        if (Number(document.docType_id) === 55 || Number(document.docType_id) === 38) {
+          // CU task for specific document types
+          payload = {
+            "task": "CU",
+            "data": {
+              "company_id": company.value.id,
+              "project_id": props.project.id,
+              "projDoc_id": document.id,
+              "docType": "certificat_urbanistic"
+            }
+          }
+        } else {
+          // Data extraction for all other AI documents
+          payload = {
+            "task": "dataExtraction",
+            "data": {
+              "company_id": company.value.id,
+              "project_id": props.project.id,
+              "projDoc_id": document.id,
+              "docType": document.docType?.name
+            }
           }
         }
-      } else {
-        // Data extraction for all other AI documents
-        payload = {
-          "task": "dataExtraction",
-          "data": {
-            "company_id": company.value.id,
-            "project_id": props.project.id,
-            "projDoc_id": document.id,
-            "docType": document.docType?.name
-          }
-        }
-      }
 
-      // Call AI processing API (non-blocking to avoid CORS issues stopping upload)
-      fetch('http://gamma.softaccel.net/api/docs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(error => {
-        console.error('AI processing trigger failed:', error)
-        console.log("Failed payload:", payload)
-      })
+        // Call AI processing API (non-blocking to avoid CORS issues stopping upload)
+        fetch('http://gamma.softaccel.net/api/docs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(error => {
+          console.error('AI processing trigger failed:', error)
+          console.log("Failed payload:", payload)
+        })
+      }
   }
     
     // Update document state
@@ -470,6 +475,65 @@ async function markAsSent(docId) {
     success.value.message = "Document marked as sent successfully"
   } catch (error) {
     console.error('Failed to mark document as sent:', error)
+  }
+}
+
+/**
+ * Process document with AI (for output documents that are AI parsable)
+ */
+async function processWithAI(document) {
+  if (!document || !document.id) {
+    console.error('Invalid document provided to processWithAI')
+    return
+  }
+
+  try {
+    // Update document state to processing
+    await updateDocumentState(document.id, 'processing')
+    
+    // Create payload for pdfFilling task
+    const payload = {
+      "task": "pdfFilling",
+      "data": {
+        "company_id": company.value.id,
+        "project_id": props.project.id,
+        "projDoc_id": document.id
+      }
+    }
+    
+    // Call AI processing API
+    const response = await fetch('http://gamma.softaccel.net/api/docs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    
+    if (!response.ok) {
+      throw new Error('AI processing request failed')
+    }
+    
+    // Show success message
+    success.value.message = "Document sent for AI processing"
+    await updateDocumentState(document.id, 'inProgress')
+    
+  } catch (error) {
+    console.error('Failed to process document with AI:', error)
+    console.log("Failed payload:", {
+      "task": "pdfFilling",
+      "data": {
+        "company_id": company.value.id,
+        "project_id": props.project.id,
+        "projDoc_id": document.id
+      }
+    })
+    
+    // Revert state if processing failed
+    await updateDocumentState(document.id, 'inProgress')
+    
+    // Show error message
+    if (error.value) {
+      error.value.message = "Failed to process document with AI"
+    }
   }
 }
 
