@@ -30,27 +30,59 @@
       </div>
     </div>
     
-    <!-- Documents grid -->
-    <div v-else-if="documents.length" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <!-- Main Documents (needed or pending state) -->
-      <MainDocumentCard
-        v-for="doc in mainDocuments" 
-        :key="`main-${doc.id}`"
-        :document="doc"
-        @open-modal="openMainDocModal"
-      />
+    <!-- Documents sections -->
+    <div v-else-if="documents.length" class="space-y-8">
+      <!-- Section 1: Documente Restante (Not Done) -->
+      <div v-if="documentsNotDone.length" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold text-gray-900">Documente Restante</h2>
+          <span class="text-sm text-gray-600">{{ documentsNotDone.length }} document{{ documentsNotDone.length !== 1 ? 'e' : '' }}</span>
+        </div>
+        
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <!-- Main Documents (needed or pending state) -->
+          <MainDocumentCard
+            v-for="doc in mainDocuments" 
+            :key="`main-${doc.id}`"
+            :document="doc"
+            @open-modal="openMainDocModal"
+          />
+          
+          <!-- Simple Documents (not done, other states) -->
+          <SimpleDocumentCard
+            v-for="doc in simpleDocumentsNotDone" 
+            :key="`simple-not-done-${doc.id}`"
+            :document="doc"
+            @upload="openUploadModal"
+            @view="docOpen"
+            @edit="docEdit"
+            @process-ai="processWithAI"
+            @mark-done="markAsDone"
+          />
+        </div>
+      </div>
       
-      <!-- Simple Documents (all other states) -->
-      <SimpleDocumentCard
-        v-for="doc in simpleDocuments" 
-        :key="`simple-${doc.id}`"
-        :document="doc"
-        @upload="openUploadModal"
-        @view="docOpen"
-        @edit="docEdit"
-        @process-ai="processWithAI"
-        @mark-done="markAsDone"
-      />
+      <!-- Section 2: Documente Depuse (Done) -->
+      <div v-if="documentsDone.length" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold text-gray-900">Documente Depuse</h2>
+          <span class="text-sm text-gray-600">{{ documentsDone.length }} document{{ documentsDone.length !== 1 ? 'e' : '' }}</span>
+        </div>
+        
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <!-- Done Documents -->
+          <SimpleDocumentCard
+            v-for="doc in simpleDocumentsDone" 
+            :key="`simple-done-${doc.id}`"
+            :document="doc"
+            @upload="openUploadModal"
+            @view="docOpen"
+            @edit="docEdit"
+            @process-ai="processWithAI"
+            @mark-done="markAsDone"
+          />
+        </div>
+      </div>
     </div>
     
     <!-- Empty state -->
@@ -156,10 +188,22 @@ const documents = computed(() => {
   return allDocs
 })
 
-// Computed property for main documents (needed or pending state) PROGRESS BAR
+// Computed properties for documents sorted by completion status
+
+// Documents that are NOT done (remaining work)
+const documentsNotDone = computed(() => {
+  return documents.value.filter(doc => doc.state !== 'done')
+})
+
+// Documents that ARE done (submitted/completed)
+const documentsDone = computed(() => {
+  return documents.value.filter(doc => doc.state === 'done')
+})
+
+// Main documents (needed or pending or rejected state) from not-done documents - PROGRESS BAR
 const mainDocuments = computed(() => {
-  return documents.value
-    .filter(doc => doc.state === 'needed' || doc.state === 'pending')
+  return documentsNotDone.value
+    .filter(doc => doc.state === 'needed' || doc.state === 'pending' || doc.state === 'rejected')
     .map(doc => {
       // Calculate completion for main documents
       const relatedPackages = docPackages.value.filter(pkg => pkg.main === doc.docType_id)
@@ -180,9 +224,14 @@ const mainDocuments = computed(() => {
     })
 })
 
-// Computed property for simple documents (all other states)
-const simpleDocuments = computed(() => {
-  return documents.value.filter(doc => doc.state !== 'needed' && doc.state !== 'pending')
+// Simple documents from not-done documents (all other non-done states)
+const simpleDocumentsNotDone = computed(() => {
+  return documentsNotDone.value.filter(doc => doc.state !== 'needed' && doc.state !== 'pending' && doc.state !== 'rejected')
+})
+
+// Simple documents from done documents
+const simpleDocumentsDone = computed(() => {
+  return documentsDone.value
 })
 
 // Computed property for available tags
