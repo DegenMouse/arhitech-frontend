@@ -10,7 +10,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       dbApi: "https://dbapi01.softaccel.net/apis/arhiTech",
-      minioEndpoint: 'http://135.181.158.154:9000',
+      minioEndpoint: 'http://gamma.softaccel.net:9000',
       buckets:         {
         templates: 'templates',
         companyFiles: 'cmpfiles'
