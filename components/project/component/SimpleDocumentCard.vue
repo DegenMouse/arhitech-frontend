@@ -13,7 +13,7 @@
           :class="getStateColor(document.state)" 
           class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap flex-shrink-0"
         >
-          {{ document.state }}
+          {{ formatState(document.state) }}
         </span>
       </div>
       
@@ -73,11 +73,20 @@
           
           <!-- Process with AI button (for AI parsable output documents) -->
           <button 
-            v-if="Number(document.docType?.aiParsable) === 1"
+            v-if="Number(document.docType?.aiParsable) === 1 && document.state === 'done'"
             @click="$emit('process-ai', document)"
             class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded"
           >
             Process with AI
+          </button>
+          
+          <!-- Mark as Done button (for output documents that are not done) -->
+          <button 
+            v-if="document.state !== 'done' && (document.state === 'inProgress' || document.state === 'processing')"
+            @click="$emit('mark-done', document)"
+            class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded"
+          >
+            Mark as Done
           </button>
         </template>
       </div>
@@ -95,7 +104,7 @@ const props = defineProps({
 })
 
 // Component emits
-const emit = defineEmits(['upload', 'view', 'edit', 'process-ai'])
+const emit = defineEmits(['upload', 'view', 'edit', 'process-ai', 'mark-done'])
 
 // Helper functions
 function formatDocumentName(name) {
@@ -114,9 +123,20 @@ function getStateColor(state) {
     pending: 'text-orange-600',
     done: 'text-green-600',
     empty: 'text-gray-600',
-    processing: 'text-blue-600'
+    processing: 'text-blue-600',
+    inProgress: 'text-blue-600'
   }
   return colors[state] || 'text-gray-600'
+}
+
+function formatState(state) {
+  if (!state) return ''
+  
+  // Convert camelCase to Title Case
+  return state
+    .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+    .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+    .trim()
 }
 
 function handleGenerate() {

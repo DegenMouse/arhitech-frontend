@@ -11,7 +11,7 @@
           :class="getStateColor(document.state)" 
           class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap flex-shrink-0"
         >
-          {{ document.state }}
+          {{ formatState(document.state) }}
         </span>
       </div>
       
@@ -71,8 +71,19 @@ function getStateColor(state) {
     pending: 'text-orange-600',
     done: 'text-green-600',
     rejected: 'text-red-600',
-    processing: 'text-blue-600'
+    processing: 'text-blue-600',
+    inProgress: 'text-blue-600'
   }
   return colors[state] || 'text-gray-600'
+}
+
+function formatState(state) {
+  if (!state) return ''
+  
+  // Convert camelCase to Title Case
+  return state
+    .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+    .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+    .trim()
 }
 </script>

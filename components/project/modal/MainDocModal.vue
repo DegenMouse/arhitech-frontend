@@ -43,7 +43,7 @@
                 :class="getStateColor(mainDocument?.state)"
                 class="text-sm font-medium capitalize"
               >
-                {{ mainDocument?.state }}
+                {{ formatState(mainDocument?.state) }}
               </span>
               
               <!-- Edit button for output documents in inProgress state -->
@@ -62,6 +62,15 @@
                 class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded"
               >
                 Process with AI
+              </button>
+              
+              <!-- Mark as Done button for output documents that are not done -->
+              <button 
+                v-if="Number(mainDocument?.docType?.isInput) === 0 && mainDocument?.state !== 'done' && (mainDocument?.state === 'inProgress' || mainDocument?.state === 'processing')"
+                @click="$emit('mark-done', mainDocument)" 
+                class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded"
+              >
+                Mark as Done
               </button>
               
               <button 
@@ -151,7 +160,7 @@
                   :class="getStateColor(doc.state)"
                   class="text-sm font-medium capitalize px-2"
                 >
-                  {{ doc.state }}
+                  {{ formatState(doc.state) }}
                 </span>
               </div>
               <div class="flex justify-center gap-2">
@@ -197,6 +206,15 @@
                 >
                   Process with AI
                 </button>
+                
+                <!-- Mark as Done button for output documents that are not done -->
+                <button 
+                  v-if="Number(doc.docType?.isInput) === 0 && doc.state !== 'done' && (doc.state === 'inProgress' || doc.state === 'processing')"
+                  @click="$emit('mark-done', doc)" 
+                  class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded"
+                >
+                  Mark as Done
+                </button>
               </div>
             </div>
           </div>
@@ -220,7 +238,7 @@ const props = defineProps({
 })
 
 // Component emits
-defineEmits(['close', 'upload', 'view', 'mark-sent', 'edit', 'process-ai'])
+defineEmits(['close', 'upload', 'view', 'mark-sent', 'edit', 'process-ai', 'mark-done'])
 
 // Computed properties for progress tracking
 const completedDocsCount = computed(() => {
@@ -250,9 +268,20 @@ function getStateColor(state) {
     done: 'text-green-600',
     rejected: 'text-red-600',
     processing: 'text-blue-600',
-    missing: 'text-red-600'
+    missing: 'text-red-600',
+    inProgress: 'text-blue-600'
   }
   return colors[state] || 'text-gray-600'
+}
+
+function formatState(state) {
+  if (!state) return ''
+  
+  // Convert camelCase to Title Case
+  return state
+    .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+    .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+    .trim()
 }
 
 function isEmail(destination) {

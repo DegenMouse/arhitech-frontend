@@ -49,6 +49,7 @@
         @view="docOpen"
         @edit="docEdit"
         @process-ai="processWithAI"
+        @mark-done="markAsDone"
       />
     </div>
     
@@ -68,6 +69,7 @@
       @mark-sent="markAsSent"
       @edit="docEdit"
       @process-ai="processWithAI"
+      @mark-done="markAsDone"
     />
 
     <!-- File upload modal -->
@@ -407,11 +409,11 @@ async function docUpload(file, document) {
       throw new Error('MINIO ERROR')
     })
     console.log("document.id", document.id)
-    // Determine new state based on AI parsability (static config)
+    // Determine new state based on document type and AI parsability
+    let newState = 'done' // Default state
     
     if(Number(document.docType?.isInput) === 1){
-      let newState = 'done' // Default state for non-AI documents
-      
+      // Input document - check if AI parsable
       if (Number(document.docType?.aiParsable) === 1) {
         // This document type is AI parsable
         newState = 'processing'
@@ -451,11 +453,15 @@ async function docUpload(file, document) {
           console.error('AI processing trigger failed:', error)
           console.log("Failed payload:", payload)
         })
+      } else {
+        // Input document that is NOT AI parsable - set to done
+        newState = 'done'
       }
-  }
-    
-    // Update document state
-    await updateDocumentState(document.id, newState)
+      
+      // Update document state for input documents
+      await updateDocumentState(document.id, newState)
+    }
+    // For output documents (isInput === 0), we don't change the state on upload
 
     // Show success message if upload completed
     success.value.message = "Document uploaded successfully"
@@ -533,6 +539,32 @@ async function processWithAI(document) {
     // Show error message
     if (error.value) {
       error.value.message = "Failed to process document with AI"
+    }
+  }
+}
+
+/**
+ * Mark document as done (for output documents)
+ */
+async function markAsDone(document) {
+  if (!document || !document.id) {
+    console.error('Invalid document provided to markAsDone')
+    return
+  }
+
+  try {
+    // Update document state to done
+    await updateDocumentState(document.id, 'done')
+    
+    // Show success message
+    success.value.message = "Document marked as done successfully"
+    
+  } catch (error) {
+    console.error('Failed to mark document as done:', error)
+    
+    // Show error message
+    if (error.value) {
+      error.value.message = "Failed to mark document as done"
     }
   }
 }
