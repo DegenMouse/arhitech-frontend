@@ -1,5 +1,10 @@
 <template>
-  <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+  <div :class="[
+    'border rounded-lg p-4 hover:shadow-md transition-shadow',
+    document.state === 'done' 
+      ? 'border-green-200 bg-green-50' 
+      : 'border-gray-200'
+  ]">
     <div class="flex flex-col h-full">
       <!-- Document name and status row -->
       <div class="flex items-start justify-between gap-2 mb-3">
@@ -99,7 +104,8 @@ function getStateColor(state) {
     needed: 'text-red-900',
     pending: 'text-orange-600',
     done: 'text-green-600',
-    empty: 'text-gray-600'
+    empty: 'text-gray-600',
+    processing: 'text-blue-600'
   }
   return colors[state] || 'text-gray-600'
 }

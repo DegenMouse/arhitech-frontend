@@ -38,10 +38,10 @@
             <div class="font-medium text-gray-900 mb-1 flex-1">
               {{ formatDocumentName(mainDocument?.docType?.name) }}
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center justify-center gap-3">
               <span 
                 :class="getStateColor(mainDocument?.state)"
-                class="text-sm font-medium capitalize mr-4"
+                class="text-sm font-medium capitalize"
               >
                 {{ mainDocument?.state }}
               </span>
@@ -53,7 +53,6 @@
               >
                 Re-upload
               </button>
-              
             </div>
           </div>
           
@@ -70,7 +69,7 @@
                 {{ isEmail(mainDocument?.docType?.destination) ? 'Trimite cererea pe email' : 'Completează cererea pe site-ul' }}
               </span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center justify-center gap-2 flex-wrap">
               <!-- Destination buttons -->
               <button 
                 v-if="!isEmail(mainDocument?.docType?.destination)"
@@ -102,7 +101,7 @@
                 Marchează trimis
               </button>
               
-              <!-- Upload button for pending state on far right -->
+              <!-- Upload button for pending state -->
               <button 
                 v-if="mainDocument?.state === 'pending'"
                 @click="$emit('upload', mainDocument)" 
@@ -137,7 +136,7 @@
                   {{ doc.state }}
                 </span>
               </div>
-              <div class="flex gap-2 ml-4">
+              <div class="flex justify-center gap-2">
                 <!-- Adjacent document action buttons -->
                 <button 
                   v-if="(doc.state === 'missing' || doc.state === 'needed') && Number(doc.docType?.isInput) === 1"
@@ -162,7 +161,6 @@
                 >
                   Re-upload
                 </button>
-                
               </div>
             </div>
           </div>
