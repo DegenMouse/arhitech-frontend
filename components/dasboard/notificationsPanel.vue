@@ -74,7 +74,10 @@ const fetchNotifications = async () => {
     }
     
     const data = await response.json()
-    notifications.value = data.data || []
+    // Filter to only show notifications with status "sent"
+    notifications.value = (data.data || []).filter(notification => 
+      notification.attributes?.status === 'sent'
+    )
     
     // Store included data for easy access
     if (data.included) {
