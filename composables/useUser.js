@@ -19,7 +19,7 @@ const auth = ref({
 // holds the user's profile data
 const profile = ref({ 
   username: '',
-  email: '' 
+  email: ''
 })
 
 const company = ref({ 
