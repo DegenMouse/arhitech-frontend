@@ -83,6 +83,72 @@
             </div>
           </div>
           
+<<<<<<< Updated upstream
+=======
+          <!-- Warning message for undefined documents -->
+          <div v-if="Number(mainDocument?.docType?.defined) === 0" class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              <div class="text-sm text-amber-700">
+                <p class="font-medium mb-1">Document nedefinit în sistem</p>
+                <p>Acest tip de document nu este încă disponibil în baza de date. Puteți încărca documentul manual sau așteptați până când un administrator îl va configura (de obicei în 24-48 ore).</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Action buttons -->
+          <div class="flex items-center gap-2 flex-wrap justify-start">
+            <!-- Edit button for output documents in inProgress state -->
+            <button 
+              v-if="mainDocument?.state === 'inProgress' && Number(mainDocument?.docType?.isInput) === 0"
+              @click="$emit('edit', mainDocument.id)" 
+              class="px-3 py-2 bg-blue-50/80 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-blue-200 min-w-[80px] flex items-center justify-center gap-1.5"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              Edit
+            </button>
+            
+            <!-- Process with AI button for AI-parsable output documents -->
+            <button 
+              v-if="Number(mainDocument?.docType?.isInput) === 0 && Number(mainDocument?.docType?.aiParsable) === 1"
+              @click="$emit('process-ai', mainDocument)" 
+              class="px-3 py-2 bg-purple-50/80 hover:bg-purple-100 text-purple-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-purple-200 min-w-[120px] flex items-center justify-center gap-1.5"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+              Process with AI
+            </button>
+            
+            <!-- Mark as Done button for output documents that are not done -->
+            <button 
+              v-if="Number(mainDocument?.docType?.isInput) === 0 && mainDocument?.state !== 'done' && (mainDocument?.state === 'inProgress' || mainDocument?.state === 'processing')"
+              @click="$emit('mark-done', mainDocument)" 
+              class="px-3 py-2 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-emerald-200 min-w-[110px] flex items-center justify-center gap-1.5"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Mark as Done
+            </button>
+            
+            <button 
+              v-if="(mainDocument?.state === 'done' || mainDocument?.state === 'rejected')"
+              @click="$emit('upload', mainDocument)" 
+              class="px-3 py-2 bg-slate-50/80 hover:bg-slate-100 text-slate-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-slate-200 min-w-[90px] flex items-center justify-center gap-1.5"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+              Re-upload
+            </button>
+          </div>
+          
+>>>>>>> Stashed changes
           <!-- Destination Section -->
           <div v-if="mainDocument?.docType?.destination" class="mt-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -243,7 +309,7 @@ defineEmits(['close', 'upload', 'view', 'mark-sent', 'edit', 'process-ai', 'mark
 // Computed properties for progress tracking
 const completedDocsCount = computed(() => {
   const mainCompleted = props.mainDocument?.state === 'done' ? 1 : 0
-  const adjacentCompleted = props.adjacentDocs?.filter(doc => doc.state === 'finished').length || 0
+  const adjacentCompleted = props.adjacentDocs?.filter(doc => doc.state === 'done').length || 0
   return mainCompleted + adjacentCompleted
 })
 
