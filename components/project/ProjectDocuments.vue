@@ -176,13 +176,13 @@ const documents = computed(() => {
     return doc.state // Any document with a state
   })
   
-  // Apply tag filter if selected, or exclude 'needed' if showing all
+  // Apply tag filter if selected, or exclude 'needed' and 'pending' if showing all
   if (selectedTag.value) {
     // When specific tag is selected, show all documents with that tag
     allDocs = allDocs.filter(doc => doc.docType?.tag === selectedTag.value)
   } else {
-    // When showing "Toate documentele", exclude 'needed' state documents
-    allDocs = allDocs.filter(doc => doc.state !== 'needed')
+    // When showing "Toate documentele", exclude 'needed' and 'pending' state documents
+    allDocs = allDocs.filter(doc => doc.state !== 'needed' && doc.state !== 'pending')
   }
   
   return allDocs
@@ -208,7 +208,7 @@ const mainDocuments = computed(() => {
       // Calculate completion for main documents
       const relatedPackages = docPackages.value.filter(pkg => pkg.main === doc.docType_id)
       const adjacentDocTypeIds = relatedPackages.map(pkg => pkg.adjacent)
-      const adjacentDocs = docs.value.filter(d => adjacentDocTypeIds.includes(d.docType_id))
+      const adjacentDocs = docs.value.filter(d => adjacentDocTypeIds.includes(d.docType_id) && d.project_id === doc.project_id)
       
       const mainCompleted = doc.state === 'done' ? 1 : 0
       const adjacentCompleted = adjacentDocs.filter(d => d.state === 'done').length

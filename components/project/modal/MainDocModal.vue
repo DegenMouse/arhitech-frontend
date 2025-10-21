@@ -72,6 +72,18 @@
             </div>
           </div>
           
+          <!-- Warning message for undefined documents -->
+          <div v-if="Number(mainDocument?.docType?.defined) === 0" class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              <div class="text-sm text-amber-700">
+                <p class="font-medium mb-1">Document nedefinit în sistem</p>
+                <p>Acest tip de document nu este încă disponibil în baza de date. Puteți încărca documentul manual sau așteptați până când un administrator îl va configura (de obicei în 24-48 ore).</p>
+              </div>
+            </div>
+          </div>
           <!-- Action buttons -->
           <div class="flex items-center gap-2 flex-wrap justify-start">
             <!-- Edit button for output documents in inProgress state -->
@@ -121,7 +133,7 @@
               Re-upload
             </button>
           </div>
-          
+
           <!-- Destination Section -->
           <div v-if="mainDocument?.docType?.destination" class="mt-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -329,7 +341,7 @@ defineEmits(['close', 'upload', 'view', 'mark-sent', 'edit', 'process-ai', 'mark
 // Computed properties for progress tracking
 const completedDocsCount = computed(() => {
   const mainCompleted = props.mainDocument?.state === 'done' ? 1 : 0
-  const adjacentCompleted = props.adjacentDocs?.filter(doc => doc.state === 'finished').length || 0
+  const adjacentCompleted = props.adjacentDocs?.filter(doc => doc.state === 'done').length || 0
   return mainCompleted + adjacentCompleted
 })
 
