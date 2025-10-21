@@ -59,11 +59,8 @@
                 {{ project.attributes?.name || 'Unnamed Project' }}
               </h3>
               <div class="flex items-center space-x-2 mt-2">
-                <span :class="getPhaseColor(project.phase)" class="px-2 py-1 rounded-full text-xs font-medium">
-                  {{ project.phase || 'No Phase' }}
-                </span>
                 <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                  {{ project.attributes?.localitate || 'Location TBD' }}
+                  {{ project.attributes?.localitate || 'Location Timisoara' }}
                 </span>
               </div>
             </div>
@@ -74,20 +71,6 @@
             </div>
           </div>
 
-          <!-- Progress section -->
-          <div class="mb-4">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-gray-700">Progress</span>
-              <span class="text-sm font-medium text-gray-900">{{ project.mockProgress }}%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                :class="getProgressColor(project.mockProgress)" 
-                class="h-2 rounded-full transition-all duration-300" 
-                :style="{ width: project.mockProgress + '%' }"
-              ></div>
-            </div>
-          </div>
 
           <!-- Project details -->
           <div class="space-y-2 text-sm text-gray-600">
@@ -102,7 +85,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
               </svg>
-              <span>{{ project.attributes?.localitate || 'Location TBD' }}</span>
+              <span>{{ project.attributes?.localitate || 'Location Timisoara' }}</span>
             </div>
           </div>
         </div>
@@ -123,39 +106,6 @@ useHead({
   title: 'My Projects - ArhiTech'
 })
 
-/**
- * Generates mock progress percentage for projects
- */
-const generateMockProgress = () => {
-  const progressOptions = [25, 45, 60, 75, 85, 95]
-  return progressOptions[Math.floor(Math.random() * progressOptions.length)]
-}
-
-/**
- * Gets color classes for phase badges
- */
-const getPhaseColor = (phase) => {
-  if (!phase) return 'bg-gray-100 text-gray-600'
-  
-  switch (phase.toLowerCase()) {
-    case 'antecu':
-      return 'bg-blue-100 text-blue-800'
-    case 'postcu':
-      return 'bg-green-100 text-green-800'
-    default:
-      return 'bg-gray-100 text-gray-600'
-  }
-}
-
-/**
- * Gets color classes for progress bars based on completion percentage
- */
-const getProgressColor = (progress) => {
-  if (progress >= 80) return 'bg-green-500'
-  if (progress >= 60) return 'bg-blue-500'
-  if (progress >= 40) return 'bg-orange-500'
-  return 'bg-red-500'
-}
 
 /**
  * Formats deadline for display
@@ -191,34 +141,7 @@ onMounted(async () => {
     // Fetch phase information for each project
     projects.value = await Promise.all(
       projectsData.map(async (project) => {
-        try {
-          // Fetch phase information
-          const phaseRes = await fetch(dbApi + '/data/projects/' + project.id + '?include=phase_id')
-          
-          if (phaseRes.ok) {
-            const phaseData = await phaseRes.json()
-            const phaseId = phaseData.data.relationships?.phase_id?.data?.id
-            
-            return {
-              ...project,
-              phase: phaseId,
-              mockProgress: generateMockProgress()
-            }
-          } else {
-            return {
-              ...project,
-              phase: null,
-              mockProgress: generateMockProgress()
-            }
-          }
-        } catch (error) {
-          console.error('Failed to fetch phase for project:', project.id, error)
-          return {
-            ...project,
-            phase: null,
-            mockProgress: generateMockProgress()
-          }
-        }
+        return project
       })
     )
   } catch (err) {
