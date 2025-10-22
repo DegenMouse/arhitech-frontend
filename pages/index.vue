@@ -18,10 +18,7 @@
           <button class="text-white hover:text-gray-300 transition-colors text-sm">Resurse</button>
           
           <a href="/login" class="px-4 py-2 text-blue-950 bg-white rounded-full hover:bg-gray-100 hover:scale-105 transition-all duration-300 inter-font text-sm">
-            Dashboard Arhitect
-          </a>
-          <a href="http://localhost:3001" class="px-4 py-2 text-blue-950 bg-white rounded-full hover:bg-gray-100 hover:scale-105 transition-all duration-300 inter-font text-sm">
-            Portal Client
+            Dashboard
           </a>
         </div>
       </div>

@@ -28,8 +28,11 @@ export default async function () {
         // Set user profile state
         profile.value = {
           username: decodedJwt.username || '',
-          email: decodedJwt.email || ''
+          email: decodedJwt.email || '',
+          accountType: decodedJwt.accountType || ''
         }
+
+        // console.log("profile.value", profile.value.accountType)
         
         // Fetch company that user is in
         await fetchCompany().catch(err => {

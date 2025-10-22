@@ -34,67 +34,41 @@
           </div>
           <div class="border-b border-gray-200 mb-4"></div>
           
-          <div class="flex items-center justify-between">
-            <div class="font-medium text-gray-900 mb-1 flex-1">
+          <!-- Document name and state -->
+          <div class="flex flex-col gap-2 mb-3">
+            <div class="font-medium text-gray-900">
               {{ formatDocumentName(mainDocument?.docType?.name) }}
             </div>
-            <div class="flex items-center justify-center gap-3">
+            <div class="flex justify-start">
               <span 
-                :class="getStateColor(mainDocument?.state)"
-                class="text-sm font-medium capitalize"
+                :class="getStateStyleWithIcon(mainDocument?.state)"
+                class="text-sm font-medium capitalize px-3 py-1.5 rounded-full border transition-all duration-200 flex items-center gap-1.5"
               >
-                {{ formatState(mainDocument?.state) }}
+              <!-- State icons -->
+              <svg v-if="mainDocument?.state === 'needed' || mainDocument?.state === 'missing'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              <svg v-else-if="mainDocument?.state === 'pending'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <svg v-else-if="mainDocument?.state === 'done'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <svg v-else-if="mainDocument?.state === 'rejected'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <svg v-else-if="mainDocument?.state === 'processing'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              <svg v-else-if="mainDocument?.state === 'inProgress'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              {{ formatState(mainDocument?.state) }}
               </span>
-              
-              <!-- Edit button for output documents in inProgress state -->
-              <button 
-                v-if="mainDocument?.state === 'inProgress' && Number(mainDocument?.docType?.isInput) === 0"
-                @click="$emit('edit', mainDocument.id)" 
-                class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded"
-              >
-                Edit
-              </button>
-              
-              <!-- Process with AI button for AI-parsable output documents -->
-              <button 
-                v-if="mainDocument?.state === 'done' && Number(mainDocument?.docType?.isInput) === 0 && Number(mainDocument?.docType?.aiParsable) === 1"
-                @click="$emit('process-ai', mainDocument)" 
-                class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded"
-              >
-                Process with AI
-              </button>
-              
-              <!-- Mark as Done button for output documents that are not done -->
-              <button 
-                v-if="Number(mainDocument?.docType?.isInput) === 0 && mainDocument?.state !== 'done' && (mainDocument?.state === 'inProgress' || mainDocument?.state === 'processing')"
-                @click="$emit('mark-done', mainDocument)" 
-                class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded"
-              >
-                Mark as Done
-              </button>
-              
-              <button 
-                v-if="(mainDocument?.state === 'done' || mainDocument?.state === 'rejected')"
-                @click="$emit('upload', mainDocument)" 
-                class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
-              >
-                Re-upload
-              </button>
-            </div>
-          </div>
-          
-<<<<<<< Updated upstream
-=======
-          <!-- Warning message for undefined documents -->
-          <div v-if="Number(mainDocument?.docType?.defined) === 0" class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <div class="flex items-start gap-2">
-              <svg class="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-              </svg>
-              <div class="text-sm text-amber-700">
-                <p class="font-medium mb-1">Document nedefinit în sistem</p>
-                <p>Acest tip de document nu este încă disponibil în baza de date. Puteți încărca documentul manual sau așteptați până când un administrator îl va configura (de obicei în 24-48 ore).</p>
-              </div>
             </div>
           </div>
           
@@ -110,7 +84,6 @@
               </div>
             </div>
           </div>
-          
           <!-- Action buttons -->
           <div class="flex items-center gap-2 flex-wrap justify-start">
             <!-- Edit button for output documents in inProgress state -->
@@ -160,8 +133,7 @@
               Re-upload
             </button>
           </div>
-          
->>>>>>> Stashed changes
+
           <!-- Destination Section -->
           <div v-if="mainDocument?.docType?.destination" class="mt-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -172,15 +144,15 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
               </svg>
               <span class="text-sm text-gray-700">
-                {{ isEmail(mainDocument?.docType?.destination) ? 'Trimite cererea pe email' : 'Completează cererea pe site-ul' }}
+                {{ isEmail(mainDocument?.docType?.destination) ? 'Trimite cererea pe email' : 'Completează cererea online' }}
               </span>
             </div>
-            <div class="flex items-center justify-center gap-2 flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap justify-start">
               <!-- Destination buttons -->
               <button 
                 v-if="!isEmail(mainDocument?.docType?.destination)"
                 @click="openLink(mainDocument?.docType?.destination)" 
-                class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded flex items-center gap-2"
+                class="px-3 py-2 bg-blue-50/80 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-blue-200 min-w-[120px] flex items-center justify-center gap-1.5"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
@@ -190,7 +162,7 @@
               <button 
                 v-else
                 @click="openEmail(mainDocument?.docType?.destination)" 
-                class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded flex items-center gap-2"
+                class="px-3 py-2 bg-blue-50/80 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-blue-200 min-w-[120px] flex items-center justify-center gap-1.5"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
@@ -199,7 +171,7 @@
               </button>
               <button 
                 @click="$emit('mark-sent', mainDocument?.id)"
-                class="px-3 py-1 bg-blue-800 hover:bg-blue-900 text-white text-sm rounded flex items-center gap-2"
+                class="px-3 py-2 bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-indigo-200 min-w-[130px] flex items-center justify-center gap-1.5"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -211,8 +183,11 @@
               <button 
                 v-if="mainDocument?.state === 'pending'"
                 @click="$emit('upload', mainDocument)" 
-                class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
+                class="px-3 py-2 bg-slate-50/80 hover:bg-slate-100 text-slate-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-slate-200 min-w-[80px] flex items-center justify-center gap-1.5"
               >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
                 Upload
               </button>
             </div>
@@ -233,56 +208,97 @@
               :key="doc.id"
               class="flex items-center justify-between py-2"
             >
-              <div class="flex items-center gap-3 flex-1">
-                <span class="font-medium text-gray-900 min-w-0 flex-1">{{ formatDocumentName(doc.docType?.name) }}</span>
-                <span 
-                  :class="getStateColor(doc.state)"
-                  class="text-sm font-medium capitalize px-2"
-                >
+              <div class="flex flex-col gap-2 flex-1">
+                <span class="font-medium text-gray-900">{{ formatDocumentName(doc.docType?.name) }}</span>
+                <div class="flex justify-start">
+                  <span 
+                    :class="getStateStyleWithIcon(doc.state)"
+                    class="text-sm font-medium capitalize px-3 py-1.5 rounded-full border transition-all duration-200 flex items-center gap-1.5"
+                  >
+                  <!-- State icons -->
+              <svg v-if="doc.state === 'needed' || doc.state === 'missing'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              <svg v-else-if="doc.state === 'pending'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <svg v-else-if="doc.state === 'done'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <svg v-else-if="doc.state === 'rejected'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <svg v-else-if="doc.state === 'processing'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              <svg v-else-if="doc.state === 'inProgress'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
                   {{ formatState(doc.state) }}
-                </span>
+                  </span>
+                </div>
               </div>
-              <div class="flex justify-center gap-2">
+              <div class="flex gap-2 justify-start">
                 <!-- Adjacent document action buttons -->
                 <button 
                   v-if="(doc.state === 'missing' || doc.state === 'needed') && Number(doc.docType?.isInput) === 1"
                   @click="$emit('upload', doc)" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
+                  class="px-3 py-2 bg-slate-50/80 hover:bg-slate-100 text-slate-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-slate-200 min-w-[80px] flex items-center justify-center gap-1.5"
                 >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                  </svg>
                   Upload
                 </button>
                 
                 <button 
-                  v-if="Number(doc.docType?.isInput) === 1 && doc.state === 'done'"
+                  v-if="(Number(doc.docType?.isInput) === 1 && doc.state === 'done') "
                   @click="$emit('view', doc.id)" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
+                  class="px-3 py-2 bg-slate-50/80 hover:bg-slate-100 text-slate-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-slate-200 min-w-[80px] flex items-center justify-center gap-1.5"
                 >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
                   View
                 </button>
                 
                 <button 
                   v-if="doc.state === 'progress' && Number(doc.docType?.isInput) === 1"
                   @click="$emit('upload', doc)" 
-                  class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded"
+                  class="px-3 py-2 bg-slate-50/80 hover:bg-slate-100 text-slate-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-slate-200 min-w-[80px] flex items-center justify-center gap-1.5"
                 >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                  </svg>
                   Re-upload
                 </button>
                 
                 <!-- Edit button for output documents in inProgress state -->
                 <button 
-                  v-if="doc.state === 'inProgress' && Number(doc.docType?.isInput) === 0"
+                  v-if="Number(doc.docType?.isInput) === 0"
                   @click="$emit('edit', doc.id)" 
-                  class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded"
+                  class="px-3 py-2 bg-blue-50/80 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-blue-200 min-w-[80px] flex items-center justify-center gap-1.5"
                 >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
                   Edit
                 </button>
                 
-                <!-- Process with AI button for AI-parsable output documents -->
+                <!-- Process with AI button for AI-parsable documents -->
                 <button 
-                  v-if="doc.state === 'done' && Number(doc.docType?.isInput) === 0 && Number(doc.docType?.aiParsable) === 1"
+                  v-if="Number(doc.docType?.isInput) === 0 && Number(doc.docType?.aiParsable) === 1"
                   @click="$emit('process-ai', doc)" 
-                  class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded"
+                  class="px-3 py-2 bg-purple-50/80 hover:bg-purple-100 text-purple-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-purple-200 min-w-[120px] flex items-center justify-center gap-1.5"
                 >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                  </svg>
                   Process with AI
                 </button>
                 
@@ -290,8 +306,11 @@
                 <button 
                   v-if="Number(doc.docType?.isInput) === 0 && doc.state !== 'done' && (doc.state === 'inProgress' || doc.state === 'processing')"
                   @click="$emit('mark-done', doc)" 
-                  class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded"
+                  class="px-3 py-2 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-emerald-200 min-w-[110px] flex items-center justify-center gap-1.5"
                 >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
                   Mark as Done
                 </button>
               </div>
@@ -340,18 +359,19 @@ function formatDocumentName(name) {
     .join(' ')
 }
 
-function getStateColor(state) {
-  const colors = {
-    needed: 'text-red-900',
-    pending: 'text-orange-600',
-    done: 'text-green-600',
-    rejected: 'text-red-600',
-    processing: 'text-blue-600',
-    missing: 'text-red-600',
-    inProgress: 'text-blue-600'
+function getStateStyleWithIcon(state) {
+  const styles = {
+    needed: 'text-red-700 bg-red-50/80 border-red-200 hover:bg-red-100/80',
+    pending: 'text-amber-700 bg-amber-50/80 border-amber-200 hover:bg-amber-100/80',
+    done: 'text-emerald-700 bg-white border-emerald-200 hover:bg-emerald-50/80',
+    rejected: 'text-rose-700 bg-rose-50/80 border-rose-200 hover:bg-rose-100/80',
+    processing: 'text-blue-700 bg-blue-50/80 border-blue-200 hover:bg-blue-100/80',
+    missing: 'text-red-700 bg-red-50/80 border-red-200 hover:bg-red-100/80',
+    inProgress: 'text-indigo-700 bg-indigo-50/80 border-indigo-200 hover:bg-indigo-100/80'
   }
-  return colors[state] || 'text-gray-600'
+  return styles[state] || 'text-gray-700 bg-gray-50/80 border-gray-200 hover:bg-gray-100/80'
 }
+
 
 function formatState(state) {
   if (!state) return ''

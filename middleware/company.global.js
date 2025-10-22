@@ -14,26 +14,27 @@ export default defineNuxtRouteMiddleware((to, from) => {
   
     const { company } = useUser()
 
-    // console.log("company.value", company.value)
+
+    console.log("company.value", company.value)
     
     // Redirect to /noComp if not in a company and accessing company routes
-    if(['/companies', '/companyMember', '/companyAdmin'].includes(to.path) && !company.value.isInCompany){
-        return navigateTo('/noComp')
+    if(['/arhitect/companies', '/arhitect/companyMember', '/arhitect/companyAdmin'].includes(to.path) && !company.value.isInCompany){
+        return navigateTo('/arhitect/noComp')
     }
 
     var path = to.path;
-    if(to.path === '/noComp' && company.value.isInCompany){
-        path = '/companies'
+    if(to.path === '/arhitect/noComp' && company.value.isInCompany){
+        path = '/arhitect/companies'
     }
 
     // console.log("isAdmin", company.value.isAdmin)
 
     // Redirect to admin dashboard if user is admin
-    if((path === '/companies' || path === '/companyMember') && company.value.isAdmin){
-        return navigateTo('/companyAdmin')
+    if((path === '/arhitect/companies' || path === '/arhitect/companyMember') && company.value.isAdmin){
+        return navigateTo('/arhitect/companyAdmin')
     // Redirect to member dashboard if user is not admin
-    }else if((path === '/companies' || path === '/companyAdmin') && !company.value.isAdmin){
+    }else if((path === '/arhitect/companies' || path === '/arhitect/companyAdmin') && !company.value.isAdmin){
         // console.log("navigating to companyMember from companyAdmin")
-        return navigateTo('/companyMember')
+        return navigateTo('/arhitect/companyMember')
     }
   })
