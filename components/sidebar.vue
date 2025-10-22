@@ -139,7 +139,7 @@ const toggleMenu = ref(false)
 const logout = () => {
   // Remove all data stored about user
   // Maybe create a function to do this later when we have more data to remove
-  
+
   // Reset authentication state
   auth.value = {
     jwtToken: null,

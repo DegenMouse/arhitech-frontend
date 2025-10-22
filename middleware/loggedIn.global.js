@@ -6,6 +6,9 @@
 // Triggers user data re-evaluation if required.
 // Used to protect all routes except login and landing page.
 //
+
+// TODO: Mihai check daca mai e nevoie de asta
+
 export default defineNuxtRouteMiddleware(async (to, from) => {
   
   if (import.meta.server) return
