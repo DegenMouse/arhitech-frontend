@@ -281,6 +281,12 @@ async function handleLogin() {
 function handleSignUp() {
   if(name.value && email.value && password.value){
     error.value = false
+  
+  let accountType = ''
+  if (isArhitect.value){
+    accountType = 'arhitect'
+  }else{
+    accountType = 'client'}
 
     // Prepare signup request body in API format
     const requestBody = {
@@ -289,7 +295,8 @@ function handleSignUp() {
           id: "",
           username: name.value,
           email: email.value,
-          password: password.value
+          password: password.value,
+          accountType: accountType
         }
       }
     }
