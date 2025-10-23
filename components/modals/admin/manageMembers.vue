@@ -75,6 +75,18 @@
             </div>
           </div>
         </div>
+
+        <div>
+          <!-- <p>Message is: {{ email }}</p> -->
+          <input v-model="email" placeholder="Type the email" />
+        </div>
+
+        <div>
+          <button @click="handleSendEmail(email)">
+            Invite
+          </button>
+        </div>
+
   
         <!-- Modal footer with close button -->
         <div class="mt-6 flex justify-end">
@@ -91,12 +103,28 @@
   
   <script setup>
   // Component props for members list
+  
+  const email = ref('')
+  
   const props = defineProps({
     members: {
       type: Array,
       default: () => []
     }
   })
+
+  async function handleSendEmail(email) {
+    const inviteType = "team-member"
+    console.log({email})
+    const res = await fetch('/api/sendEmailInvite', {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({email, inviteType})
+      })
+    if(!res.ok)
+      console.log("Diddy works here");
+    
+  }
 
   onMounted(() => {
     console.log(props.members)

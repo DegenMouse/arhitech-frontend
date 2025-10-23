@@ -16,7 +16,7 @@ libre.convertAsync = promisify(libre.convert.bind(libre));
 // Promisify the convert function as shown in Nutrient guide
 // const convertAsync = promisify(libre.convert);
 
-export default defineEventHandler(async (event) => {
+export default eventHandler(async (event) => {
   
   console.log('doc2pdf');
 
