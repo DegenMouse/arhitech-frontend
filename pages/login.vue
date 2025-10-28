@@ -227,8 +227,7 @@ const email = ref('')
 const password = ref('')
 const isArhitect = ref('true')
 const errorMessage = ref('')
-
-/** 
+ /** 
  * Handles user login by sending credentials to the API
  * Uses FormData for the request body and stores JWT on success
  */
@@ -259,12 +258,17 @@ async function handleLogin() {
         auth.value.reEvalRequired = true
 
         await fetchUserData()
-        
-        if(profile.value.accountType === 'arhitect'){
+        const pendingInvite = localStorage.getItem('pendingInvite')
+        if (pendingInvite) {
+          localStorage.removeItem('pendingInvite') // Clear it after use
+          navigateTo(`/invite/${pendingInvite}`)
+        } else if(profile.value.accountType === 'arhitect'){
           navigateTo('/arhitect/dashboard')
         }else if(profile.value.accountType === 'client'){
           navigateTo('/client/dashboard')
         }
+        
+
       } 
     }).catch(error => {console.error(error)})
   }else{

@@ -2,13 +2,24 @@
     <button @click="handleInvite($route.params.id)">
         Click to join
     </button>
+    <div>{{ entityId }}</div>
+    <div>{{ entityType }}</div>
 </template>
 
 <script setup>
+    
+    definePageMeta({
+        layout: false
+    })
+    
     const {profile,auth} = useUser();
     const route = useRoute();
 
-    // this will need login check
+    const entityType = route.query.enType;
+    const entityId = route.query.enId;
+
+
+
 
     async function handleInvite(token) {
         const res = await fetch('/api/validateInviteEmail', {

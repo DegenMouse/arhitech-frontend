@@ -23,6 +23,8 @@ const profile = ref({
   accountType: ''
 })
 
+const isInvited = ref('')
+
 const company = ref({ 
   companyName: "", 
   isInCompany: false, 
@@ -32,5 +34,5 @@ const company = ref({
 
 // Export composable function for use in components
 export default function() {
-  return { auth, profile, company }
+  return { auth, profile, company, isInvited }
 }
