@@ -1,5 +1,6 @@
 <template>
     <button @click="handleInvite($route.params.id)">
+        Click to join
     </button>
 </template>
 
