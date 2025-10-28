@@ -113,13 +113,18 @@
     }
   })
 
+
+
   async function handleSendEmail(email) {
+    
+    const { company } = useUser();
+    
     const inviteType = "team-member"
-    console.log({email})
-    const res = await fetch('/api/sendEmailInvite', {
+    const entityId = company.value.id;
+    const res = await fetch('/api/sendInviteEmail', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({email, inviteType})
+        body: JSON.stringify({email, inviteType, entityId})
       })
     if(!res.ok)
       console.log("Diddy works here");
