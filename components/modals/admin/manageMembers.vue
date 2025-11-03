@@ -76,15 +76,44 @@
           </div>
         </div>
 
-        <div>
-          <!-- <p>Message is: {{ email }}</p> -->
-          <input v-model="email" placeholder="Type the email" />
-        </div>
-
-        <div>
-          <button @click="handleSendEmail(email)">
-            Invite
-          </button>
+        <!-- Enhanced invite section -->
+        <div class="mt-8 pt-6 border-t border-gray-200">
+          <h4 class="text-lg font-semibold text-gray-800 mb-4">Invite New Member</h4>
+          
+          <!-- Enhanced email input field -->
+          <div class="space-y-4">
+            <div>
+              <label for="email-input" class="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+                <input
+                  id="email-input"
+                  v-model="email"
+                  type="email"
+                  placeholder="Enter member's email address"
+                  class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0743ae] focus:outline-none focus:ring-2 focus:ring-[#0743ae] focus:ring-offset-2 transition-all duration-100 hover:border-gray-300"
+                />
+              </div>
+            </div>
+            
+            <!-- Enhanced invite button -->
+            <button 
+              @click="handleSendEmail(email)"
+              :disabled="!email.trim()"
+              class="w-full bg-[#0743ae] hover:bg-[#0743ae]/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium transition-all duration-100 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#0743ae] focus:ring-offset-2 transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center"
+            >
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+              </svg>
+              Send Invitation
+            </button>
+          </div>
         </div>
 
   
