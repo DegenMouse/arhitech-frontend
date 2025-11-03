@@ -1,7 +1,7 @@
 // server/api/convert-docx.post.js
 import libre from 'libreoffice-convert';
 // import fs from 'fs';
-import imageToPDF, { sizes } from 'image-to-pdf';
+import imageToPDF from 'image-to-pdf';
 import { writeFileSync, unlinkSync } from 'fs'
 import sizeOf from 'image-size'
 import { tmpdir } from 'os'
