@@ -120,7 +120,6 @@
               
               <!-- Client management form (shown when managing clients) -->
               <div v-if="managingClientsFor === project.id" class="mt-3 p-3 border rounded-md">
-                
                 <input
                 id="email-input"
                 v-model="newClientEmail"
@@ -154,6 +153,7 @@
 // Component props for projects and members data
 
 const newClientEmail = ref('')
+const newClientProjectId = ref('')
 
 const props = defineProps({
   projects: {
@@ -169,9 +169,9 @@ const props = defineProps({
 async function handleSendEmail(email) {
     
     const { company } = useUser();
-    
-    const inviteType = "team-member"
-    const entityId = company.value.id;
+
+    const inviteType = "client"
+    const entityId = newClientProjectId.value;
     const res = await fetch('/api/sendInviteEmail', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
@@ -243,9 +243,11 @@ const toggleClientManagement = (projectId) => {
   if (managingClientsFor.value === projectId) {
     managingClientsFor.value = null
     newClientIdForProject.value = ''
+    newClientProjectId.value = ''
   } else {
     managingClientsFor.value = projectId
     newClientIdForProject.value = ''
+    newClientProjectId.value = projectId
   }
 }
 
