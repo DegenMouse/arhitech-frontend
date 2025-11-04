@@ -9,22 +9,19 @@ import { join } from 'path'
 
 import { promisify } from 'util';
 
-// Bind the method so `this` inside convert still points at libre,
-// then create a Promise‑returning version and attach it if you like:
-libre.convertAsync = promisify(libre.convert.bind(libre));
-
 // Promisify the convert function as shown in Nutrient guide
-// const convertAsync = promisify(libre.convert);
+// Bind the method so `this` inside convert still points at libre
+const convertAsync = promisify(libre.convert.bind(libre));
 
 export default eventHandler(async (event) => {
   
   console.log('doc2pdf');
 
-  const parts = await readMultipartFormData(event);
+  const parts: any = await readMultipartFormData(event);
 
   console.log(parts);
   
-  const filePart = parts.find(p => p.name === 'file');
+  const filePart = parts.find((p: { name: string; }) => p.name === 'file');
   if (!filePart) {
     return sendError(event, createError({ statusCode: 400, statusMessage: 'No file uploaded' }));
   }
@@ -34,7 +31,7 @@ export default eventHandler(async (event) => {
 
   if(filePart.type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'){
     console.log("docx")
-    const pdfBuff = await libre.convertAsync(docxBuffer, 'pdf',undefined);
+    const pdfBuff = await convertAsync(docxBuffer, 'pdf',undefined);
 
     return pdfBuff;
   }else if(filePart.type == 'image/jpeg' || filePart.type == 'image/png'){

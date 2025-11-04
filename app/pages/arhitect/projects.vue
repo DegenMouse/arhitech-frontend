@@ -127,16 +127,21 @@ const formatDeadline = (deadline) => {
 onMounted(async () => {
   try {
     // Fetch projects where user is a member
-    const res = await fetch(dbApi + '/data/users/' + auth.value.id + '/users_in_project/?include=project_id')
+    console.log("id",auth.value.id)
+    // const res = await fetch(dbApi + '/data/users/' + auth.value.id + '/users_in_project/?include=project_id')
+    const res = await fetch(dbApi + '/data/users_in_company/' + auth.value.id + '?include=projects')
     
     if (!res.ok) {
       throw new Error('Failed to fetch projects')
     }
     
     const data = await res.json()
+
+    console.log("data",data)
     
     // Process projects and add mock data
-    const projectsData = data.includes || []
+    // const projectsData = data.includes || []
+    let projectsData = data.includes || []
     
     // Fetch phase information for each project
     projects.value = await Promise.all(

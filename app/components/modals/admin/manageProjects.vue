@@ -119,42 +119,19 @@
               </div>
               
               <!-- Client management form (shown when managing clients) -->
-              <div v-if="managingClientsFor === project.id" class="mt-3 p-3 border border-green-200 rounded-md bg-green-50">
-                <div class="flex space-x-2 mb-2">
-                  <input
-                    v-model="newClientIdForProject"
-                    type="text"
-                    placeholder="Enter client user ID"
-                    class="flex-1 px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
-                  />
-                  <button
-                    @click="addClientToProject(project.id)"
-                    class="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
-                  >
-                    Add
-                  </button>
-                </div>
-                <div v-if="project.clients_in_project?.length > 0" class="space-y-1">
-                  <div 
-                    v-for="client in project.clients_in_project" 
-                    :key="client.id"
-                    class="flex items-center justify-between text-xs"
-                  >
-                    <span>{{ client.username || client.email || 'Unknown Client' }}</span>
-                    <button
-                      @click="removeClientFromProject(project.id, client.id)"
-                      class="text-red-600 hover:text-red-800"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-                <button
-                  @click="managingClientsFor = null; newClientIdForProject = ''"
-                  class="mt-2 text-xs text-gray-600 hover:text-gray-800"
-                >
-                  Done
+              <div v-if="managingClientsFor === project.id" class="mt-3 p-3 border rounded-md">
+                
+                <input
+                id="email-input"
+                v-model="newClientEmail"
+                type = email
+                placeholder="Enter clients's email address"
+                />
+                <div>
+                <button @click="handleSendEmail(newClientEmail)">
+                  Click to send email
                 </button>
+              </div>
               </div>
             </div>
           </div>
@@ -175,6 +152,9 @@
 
 <script setup>
 // Component props for projects and members data
+
+const newClientEmail = ref('')
+
 const props = defineProps({
   projects: {
     type: Array,
@@ -185,6 +165,23 @@ const props = defineProps({
     default: () => []
   }
 })
+
+async function handleSendEmail(email) {
+    
+    const { company } = useUser();
+    
+    const inviteType = "team-member"
+    const entityId = company.value.id;
+    const res = await fetch('/api/sendInviteEmail', {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({email, inviteType, entityId})
+      })
+    if(!res.ok)
+      console.log("Diddy works here");
+    
+  }
+
 // Component events
 const emit = defineEmits(['close', 'fetchProjects', 'submit'])
 
