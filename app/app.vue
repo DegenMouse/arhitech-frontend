@@ -20,7 +20,10 @@
     @confirm="confirmModal.onConfirm"
   />
 </template>
-<script setup>
+<script setup>  
+import useConfirm from '@/composables/useConfirm'
+import useUI from '@/composables/useUI'
+
 const confirmModal = useConfirm()
 const { error, success } = useUI()
 </script>

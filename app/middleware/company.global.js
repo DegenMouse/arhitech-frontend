@@ -6,6 +6,7 @@
 // Redirects to admin/member dashboards based on isAdmin flag.
 // Used to control access to company-related pages and ensure correct dashboard.
 //
+
 export default defineNuxtRouteMiddleware((to, from) => {
   
     if (import.meta.server) return

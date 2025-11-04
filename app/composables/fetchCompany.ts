@@ -6,6 +6,10 @@
 // Checks if the user is an admin and updates isAdmin accordingly.
 // Throws errors if the user is not in a company or if the fetch fails.
 //
+
+import { useRuntimeConfig } from "nuxt/app"
+
+
 export default function() : Promise<void> {
     const { auth, company } = useUser()
     const config = useRuntimeConfig()

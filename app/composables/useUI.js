@@ -11,5 +11,5 @@ const success = ref({
 
 // Export composable function for use in components
 export default function() {
-  return { error, success, confirm }
+  return { error, success }
 }
