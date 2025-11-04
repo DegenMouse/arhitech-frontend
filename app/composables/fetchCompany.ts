@@ -9,7 +9,6 @@
 
 import { useRuntimeConfig } from "nuxt/app"
 
-
 export default function() : Promise<void> {
     const { auth, company } = useUser()
     const config = useRuntimeConfig()
