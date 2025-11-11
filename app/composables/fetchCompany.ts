@@ -26,7 +26,7 @@ export default function() : Promise<void> {
         // If company data exists, update state
         if(!(Array.isArray(companyData) && companyData.length == 0)){
             company.value.companyName = data.data.attributes.name
-            company.value.companyTransactionalEmail = data.data.attributes.TransactionalEmail
+            company.value.companyTransactionalEmail = data.data.attributes.transactionalEmail
             company.value.isInCompany = true
             company.value.id = data.data.id
         }else{

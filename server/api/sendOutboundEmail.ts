@@ -3,7 +3,7 @@ import { createClient } from 'redis';
 interface requestBody {
     recipientEmail: string,
     senderEmail: string,
-    docType: string
+    docTypeId: string
 
 }
 
@@ -34,14 +34,10 @@ async function sendOutboundEmailTask(taskData: any) {
 } 
 
 export default eventHandler(async (event) => {
-  console.log("Got clicker inside here")  
+  
   const body: requestBody = await readBody(event);
-    const {recipientEmail, senderEmail, docType} = body;
-    const payload = {
-        recipientEmail,
-        senderEmail,
-        docType }
-    await sendOutboundEmailTask({payload:JSON.stringify(payload)})
+  console.log(body);
+    await sendOutboundEmailTask({payload:JSON.stringify(body)})
     
     return { success: true, message: 'Email task queued successfully' }
 })

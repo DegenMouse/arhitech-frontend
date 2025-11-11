@@ -349,17 +349,17 @@ const totalDocsCount = computed(() => {
   return 1 + (props.adjacentDocs?.length || 0)
 })
 
-async function handleOutboundEmail(recipient, docType) {
+async function handleOutboundEmail(recipient, docTypeId) {
   console.log('Clicked this nigga')  
-  const company  = useUser()
-    const sender = company.companyTransactionalEmail
-    const res = await fetch('/api/sendOutboundEmail', {
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({recipientEmail: recipient, senderEmail: sender, docType})
-      })
-    if(!res.ok)
-      console.log("Diddy works here");
+  const { company } = useUser();
+  const sender = company.value?.companyTransactionalEmail || '';
+  const res = await fetch('/api/sendOutboundEmail', {
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({recipientEmail: recipient, senderEmail: sender, docTypeId})
+    })
+  if(!res.ok)
+    console.log("Diddy works here");
 }
 
 // Helper functions
