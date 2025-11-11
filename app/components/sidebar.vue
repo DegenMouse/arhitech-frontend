@@ -27,9 +27,9 @@
     <!-- Enhanced navigation menu -->
     <nav @click="console.log($route.path)" class="flex-1 p-4 space-y-2">
       <!-- Dashboard link with improved styling -->
-      <NuxtLink to="dashboard" 
+      <NuxtLink to="/arhitect/dashboard" 
         class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-100 group" 
-        :class="$route.path === 'dashboard' 
+        :class="$route.path === '/arhitect/dashboard' 
           ? 'bg-[#0743ae]/10 text-[#0743ae] border-2 border-[#0743ae]/30' 
           : 'text-gray-700 hover:bg-gray-100 hover:text-[#0743ae]'">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,9 +39,9 @@
       </NuxtLink>
       
       <!-- Company link with improved styling -->
-      <NuxtLink to="companies" 
+      <NuxtLink to="/arhitect/companies" 
         class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-100 group"
-        :class="$route.path === 'companies' || $route.path === 'companyAdmin' || $route.path === 'companyMember' || $route.path === 'noComp' 
+        :class="$route.path === '/arhitect/companies' || $route.path === '/arhitect/companyAdmin' || $route.path === '/arhitect/companyMember' || $route.path === '/arhitect/noComp' 
           ? 'bg-[#0743ae]/10 text-[#0743ae] border-2 border-[#0743ae]/30' 
           : 'text-gray-700 hover:bg-gray-100 hover:text-[#0743ae]'">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,9 +52,9 @@
       </NuxtLink>
       
       <!-- Projects link with improved styling -->
-      <NuxtLink to="projects" 
+      <NuxtLink to="/arhitect/projects" 
         class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-100 group"
-        :class="$route.path.startsWith('projects')
+        :class="$route.path.startsWith('/arhitect/projects')
           ? 'bg-[#0743ae]/10 text-[#0743ae] border-2 border-[#0743ae]/30' 
           : 'text-gray-700 hover:bg-gray-100 hover:text-[#0743ae]'">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,7 +101,7 @@
       <div v-if="toggleMenu && auth.isLoggedIn" 
            class="mt-2 bg-gray-50 border-2 border-gray-300 rounded-xl shadow-sm overflow-hidden">
         <!-- Account settings link -->
-        <NuxtLink to="account" 
+        <NuxtLink to="/arhitect/account" 
                   class="flex items-center space-x-3 w-full p-3 text-left hover:bg-gray-100 transition-colors duration-100">
           <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>

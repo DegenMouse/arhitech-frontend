@@ -26,11 +26,13 @@ export default function() : Promise<void> {
         // If company data exists, update state
         if(!(Array.isArray(companyData) && companyData.length == 0)){
             company.value.companyName = data.data.attributes.name
+            company.value.companyTransactionalEmail = data.data.attributes.TransactionalEmail
             company.value.isInCompany = true
             company.value.id = data.data.id
         }else{
             // No company found, reset state
             company.value.companyName = ""
+            company.value.companyTransactionalEmail = ""
             company.value.isInCompany = false
             company.value.isAdmin = false
             throw new Error('No company found')

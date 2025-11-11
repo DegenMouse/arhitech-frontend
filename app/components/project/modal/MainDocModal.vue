@@ -161,7 +161,7 @@
               </button>
               <button 
                 v-else
-                @click="openEmail(mainDocument?.docType?.destination)" 
+                @click="handleOutboundEmail(mainDocument?.docType?.destination, mainDocument?.docType?.id)"
                 class="px-3 py-2 bg-blue-50/80 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-blue-200 min-w-[120px] flex items-center justify-center gap-1.5"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -348,6 +348,19 @@ const completedDocsCount = computed(() => {
 const totalDocsCount = computed(() => {
   return 1 + (props.adjacentDocs?.length || 0)
 })
+
+async function handleOutboundEmail(recipient, docType) {
+  console.log('Clicked this nigga')  
+  const company  = useUser()
+    const sender = company.companyTransactionalEmail
+    const res = await fetch('/api/sendOutboundEmail', {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({recipientEmail: recipient, senderEmail: sender, docType})
+      })
+    if(!res.ok)
+      console.log("Diddy works here");
+}
 
 // Helper functions
 function formatDocumentName(name) {

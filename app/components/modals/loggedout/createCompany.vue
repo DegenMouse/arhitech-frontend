@@ -55,6 +55,13 @@
             required
           />
         </div>
+        <div>
+          arhitect company email:
+          <div> email va fi folosit pentru a trimite si receptiona emailuri pentru companie </div>
+          Afla mai mult in sectiunea ....
+        </div>
+        <input v-model="transactionalEmail" type="text" placeholder="numele firmei tale"/> <span>@arhitech.com</span>
+        
 
         <!-- Form action buttons -->
         <div class="flex space-x-3 pt-4">
@@ -97,6 +104,14 @@ const formData = reactive({
   email: ''
 })
 
+const transactionalEmail = computed({
+  get: () => {
+    if (!formData.email) return ''
+    const parts = formData.email.split('@')
+    return parts[0] || ''
+  },
+})
+
 /**
  * Handles form submission by emitting company data
  * Trims whitespace from inputs before submission
@@ -104,7 +119,8 @@ const formData = reactive({
 const handleSubmit = () => {
   emit('submit', {
     name: formData.name.trim(),
-    email: formData.email.trim()
+    email: formData.email.trim(),
+    transactionalEmail: `${transactionalEmail}@arhitech.com`
   })
 }
 </script>

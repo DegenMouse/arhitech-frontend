@@ -1,2 +1,0 @@
-users should only have access to files of projects that they are part of => each user
-    will have a minio account with certain privileges
