@@ -22,6 +22,7 @@ export default async function () {
     // Reset company state on success
     company.value = { 
       companyName: "", 
+      companyTransactionalEmail: "",
       isInCompany: false, 
       isAdmin: false
     }

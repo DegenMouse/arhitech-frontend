@@ -19,7 +19,7 @@
     "image-to-pdf": "^3.0.2",
     "libreoffice-convert": "^1.6.1",
     "minio": "^8.0.5",
-    "nuxt": "3.17.6",
+    "nuxt": "4.2.0",
     "os": "^0.1.2",
     "path": "^0.12.7",
     "pdf-lib": "^1.17.1",

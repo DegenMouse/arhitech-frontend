@@ -6,9 +6,13 @@
 // Fetches company data if user is authenticated.
 // Handles JWT expiration and error cases.
 //
+import isJWTExpired from '@/utils/isJWTExpired'
+import fetchCompany from '@/composables/fetchCompany'
+
 export default async function () {
-  const { auth, profile } = useUser()
+  // if (import.meta.server || typeof window === 'undefined') return
   
+  const { auth, profile } = useUser()
   // Check if user is logged in so that this isn't run on every page load
   if(!auth.value.isLoggedIn){
     const jwtToken = localStorage.getItem('jwt')

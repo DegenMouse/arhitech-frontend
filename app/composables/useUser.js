@@ -27,6 +27,7 @@ const isInvited = ref('')
 
 const company = ref({ 
   companyName: "", 
+  companyTransactionalEmail: "",
   isInCompany: false, 
   isAdmin: false,
   id: null

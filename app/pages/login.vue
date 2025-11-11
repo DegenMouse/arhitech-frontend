@@ -72,53 +72,55 @@
           </div>
 
         <div v-if="isSignUp" class="space-y-4">
-  <!-- Account type toggle -->
-  <div class="space-y-2">
-    <label class="block text-sm font-medium text-gray-700">Account Type</label>
-    <div class="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl hover:border-gray-300 transition-all duration-100">
-      <!-- Current selection with icon on the left -->
-      <div class="flex items-center space-x-2">
-        <svg v-if="!isArhitect" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-        </svg>
-        <svg v-else class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-        </svg>
-        <span class="text-sm font-medium text-gray-900">{{ isArhitect ? 'Architect' : 'Client' }}</span>
+        <!-- Account type toggle -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700">Account Type</label>
+          <div class="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl hover:border-gray-300 transition-all duration-100">
+            <!-- Current selection with icon on the left -->
+            <div class="flex items-center space-x-2">
+              <svg v-if="!isArhitect" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              <svg v-else class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+              </svg>
+              <span class="text-sm font-medium text-gray-900">{{ isArhitect ? 'Architect' : 'Client' }}</span>
+            </div>
+            
+            <!-- Compact Toggle Switch on the right -->
+            <div class="relative">
+              <input 
+                id="isArhitect"
+                v-model="isArhitect"
+                type="checkbox"
+                class="sr-only"
+              />
+              <label 
+                for="isArhitect" 
+                class="relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus-within:outline-none focus-within:ring-2 focus-within:ring-[#0743ae] focus-within:ring-offset-2"
+                :class="isArhitect ? 'bg-[#0743ae]' : 'bg-gray-200'"
+              >
+                <span 
+                  class="inline-block h-3 w-3 transform rounded-full bg-white transition duration-200 ease-in-out"
+                  :class="isArhitect ? 'translate-x-5' : 'translate-x-1'"
+                ></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Warning message -->
+        <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4">
+          <div class="flex items-center">
+            <svg class="flex-shrink-0 w-5 h-5 text-amber-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <p class="text-amber-700 text-sm font-medium">Selectează „Arhitect” pentru management și optimizare workflow sau „Client” pentru vizualizare și comunicare legată de proiect.</p>
+          </div>
+        </div>
+       
       </div>
-      
-      <!-- Compact Toggle Switch on the right -->
-      <div class="relative">
-        <input 
-          id="isArhitect"
-          v-model="isArhitect"
-          type="checkbox"
-          class="sr-only"
-        />
-        <label 
-          for="isArhitect" 
-          class="relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus-within:outline-none focus-within:ring-2 focus-within:ring-[#0743ae] focus-within:ring-offset-2"
-          :class="isArhitect ? 'bg-[#0743ae]' : 'bg-gray-200'"
-        >
-          <span 
-            class="inline-block h-3 w-3 transform rounded-full bg-white transition duration-200 ease-in-out"
-            :class="isArhitect ? 'translate-x-5' : 'translate-x-1'"
-          ></span>
-        </label>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Warning message -->
-  <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4">
-    <div class="flex items-center">
-      <svg class="flex-shrink-0 w-5 h-5 text-amber-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-      </svg>
-      <p class="text-amber-700 text-sm font-medium">Selectează „Arhitect” pentru management și optimizare workflow sau „Client” pentru vizualizare și comunicare legată de proiect.</p>
-    </div>
-  </div>
-</div>
+
         
 
           <!-- Enhanced email field -->
@@ -227,6 +229,7 @@ const email = ref('')
 const password = ref('')
 const isArhitect = ref('true')
 const errorMessage = ref('')
+const newCompanyEmail = ref('')
  /** 
  * Handles user login by sending credentials to the API
  * Uses FormData for the request body and stores JWT on success
