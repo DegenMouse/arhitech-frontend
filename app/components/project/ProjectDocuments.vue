@@ -95,6 +95,7 @@
       v-if="mainDocModal.show"
       :main-document="mainDocModal.document"
       :adjacent-docs="mainDocModal.adjacentDocs"
+      :project-id="project.id"
       @close="mainDocModal.show = false"
       @upload="openUploadModal"
       @view="docOpen"

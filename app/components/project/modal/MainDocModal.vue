@@ -170,7 +170,7 @@
                 Trimite Email
               </button>
               <button 
-                @click="$emit('mark-sent', mainDocument?.id)"
+                @click="markAsSent(mainDocument?.id, projectId)"
                 class="px-3 py-2 bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border border-indigo-200 min-w-[130px] flex items-center justify-center gap-1.5"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -332,11 +332,16 @@ const props = defineProps({
   adjacentDocs: {
     type: Array,
     default: () => []
+  },
+  projectId: {  // Change from project_id to projectId
+    type: [String, Number],
+    required: true
   }
 })
 
-// Component emits
-defineEmits(['close', 'upload', 'view', 'mark-sent', 'edit', 'process-ai', 'mark-done'])
+
+const emit = defineEmits(['close', 'upload', 'view', 'mark-sent', 'edit', 'process-ai', 'mark-done'])
+const dbApi = useRuntimeConfig().public.dbApi
 
 // Computed properties for progress tracking
 const completedDocsCount = computed(() => {
@@ -360,6 +365,50 @@ async function handleOutboundEmail(recipient, docTypeId) {
     })
   if(!res.ok)
     console.log("Diddy works here");
+}
+
+async function markAsSent(mainDocId) {
+  const projectId = props.projectId
+  const docTypeId = props.mainDocument?.docType_id
+  
+  console.log('projectId:', projectId)
+  console.log('mainDocId:', mainDocId)
+  console.log('docTypeId:', docTypeId)
+  
+  if (!projectId || !docTypeId) {
+    console.error('Missing projectId or docTypeId')
+    return
+  }
+  
+  emit('mark-sent', mainDocId)
+
+  const res = await fetch(dbApi + `/data/requests?filter=project_id=${projectId},docType_id=${docTypeId}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  console.log(res);
+  if (!res.ok) {
+    throw new Error('Failed to retrieve requests table')
+  }
+  const data = await res.json();
+  const request_id = (data.data[0].id)
+
+  const update = await fetch(dbApi + `/data/requests/${request_id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        data: { attributes: { isSent: 1 } 
+        }
+      })
+    })
+    if (!update.ok) {
+      console.log(update)
+      throw new Error('Failed to mark as sent')
+  }
+
+  
 }
 
 // Helper functions
