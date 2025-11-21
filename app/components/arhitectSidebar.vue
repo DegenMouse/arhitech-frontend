@@ -151,7 +151,8 @@ const logout = () => {
   // Reset profile data
   profile.value = { 
     username: '',
-    email: '' 
+    email: '', 
+    accountType: '',
   }
 
   // Reset company data
