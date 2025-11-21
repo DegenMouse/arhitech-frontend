@@ -1,9 +1,9 @@
 <template>
-    <div>Client Dashboard</div>
+  <div>Client Documents</div>
 </template>
 
 <script setup>
 definePageMeta({
-  layout: 'client'
+layout: 'client'
 })
 </script>

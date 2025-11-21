@@ -394,12 +394,14 @@ async function markAsSent(mainDocId) {
   const request_id = (data.data[0].id)
 
   const update = await fetch(dbApi + `/data/requests/${request_id}`, {
-      method: 'POST',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        data: { attributes: { isSent: 1 } 
+        data: { 
+          id: request_id,
+          attributes: { isSent: 1 } 
         }
       })
     })

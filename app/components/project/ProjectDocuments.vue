@@ -130,7 +130,7 @@
 // Import new components
 import MainDocumentCard from './component/MainDocumentCard.vue'
 import SimpleDocumentCard from './component/SimpleDocumentCard.vue'
-import MainDocModal from './modal/MainDocModal.vue'
+import MainDocModal from '../modals/project/MainDocModal.vue'
 
 // Component props
 const props = defineProps({

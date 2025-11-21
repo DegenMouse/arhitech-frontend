@@ -259,8 +259,9 @@ async function handleLogin() {
         // Store JWT token and trigger auth re-evaluation
         localStorage.setItem('jwt', data.jwt)
         auth.value.reEvalRequired = true
-
         await fetchUserData()
+        console.log("to")
+        console.log(`bop: ${profile.value.accountType}`);
         const pendingInvite = localStorage.getItem('pendingInvite')
         if (pendingInvite) {
           localStorage.removeItem('pendingInvite') // Clear it after use

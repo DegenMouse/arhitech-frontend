@@ -1,9 +1,9 @@
 <template>
-    <div>Client Dashboard</div>
+  <div>Client Chat</div>
 </template>
 
 <script setup>
 definePageMeta({
-  layout: 'client'
+layout: 'client'
 })
 </script>
