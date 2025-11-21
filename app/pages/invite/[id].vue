@@ -72,7 +72,7 @@
 
         <!-- Join button -->
         <button 
-          @click="handleInvite($route.params.id)"
+          @click="handleInvite($route.params.id, $route.query.enType)"
           class="w-full bg-[#0743ae] text-white py-4 px-6 rounded-xl font-semibold text-lg hover:bg-[#0743ae]/90 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
         >
           <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,13 +181,13 @@
       return entityName.value || entityId
     }
 
-    async function handleInvite(token) {
+    async function handleInvite(token, inviteType) {
         const res = await fetch('/api/validateInviteEmail', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             token: token,
-            inviteType: "team-member",
+            inviteType: inviteType,
             userEmail: profile.value.email,
             userId: auth.value.id
         })

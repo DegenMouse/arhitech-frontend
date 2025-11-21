@@ -46,9 +46,39 @@ async function insertTeamMember(userId, companyId) {
   } catch (e) {
       console.log(e)
   }
+}
 
+async function insertClient(userId, projectId) {
+  const dbApi = useRuntimeConfig().public.dbApi
+  const requestBody = {
+    data: {
+      // type: 'users_in_company',
+      attributes: {
+        user_id: userId,
+        project_id: projectId
+      }
+    }
+  }
 
+  console.log("requestBody")
+  console.log(requestBody)
 
+  try {
+    const res = await fetch(dbApi + '/data/clients_in_project', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    })
+    if(!res.ok) {
+      console.log(res)
+      // return
+    }
+    const data = await res.json()
+    console.log(data)
+    return data
+  } catch (e) {
+      console.log(e)
+  }
 }
 
 export default eventHandler(async (event) => {
@@ -63,8 +93,12 @@ export default eventHandler(async (event) => {
 
     if (data.inviteType == inviteType && data.email == userEmail) {
       if(inviteType == "team-member") {
-        console.log('incercam sa inseram');
+        console.log('incercam sa inseram team member');
         await insertTeamMember(userId, data.entityId)
+      }
+      else if(inviteType == "client") {
+        console.log('incercam sa inseram client');
+        await insertClient(userId, data.entityId)
       }
     }
     else {
