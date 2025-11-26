@@ -636,7 +636,7 @@ const deleteProject = () => {
         throw new Error('Failed to delete project')
       }
       // Navigate back to projects list after deletion
-      navigateTo('projects')
+      navigateTo('/arhitect/projects')
     }).catch(err => {
       console.error('Failed to delete project:', err)
     })

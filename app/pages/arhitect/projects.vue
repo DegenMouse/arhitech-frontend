@@ -8,8 +8,15 @@
   Handles empty state when user has no projects assigned.
 -->
 <template>
+  <!-- Loading state -->
+  <ModalsLoading
+    v-if="loading"
+    title="Loading Projects"
+    message="Please wait while we fetch your projects..."
+  />
+  
   <!-- Enhanced projects container with modern design -->
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+  <div v-else class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
     <div class="max-w-6xl mx-auto">
       <!-- Enhanced page header -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
@@ -100,6 +107,7 @@ const { auth } = useUser()
 
 // Reactive projects list
 const projects = ref([])
+const loading = ref(true)
 
 // Set page title
 useHead({
@@ -123,35 +131,13 @@ const formatDeadline = (deadline) => {
   }
 }
 
-// Fetch user's projects on component mount
 onMounted(async () => {
   try {
-    // Fetch projects where user is a member
-    console.log("id",auth.value.id)
-    // const res = await fetch(dbApi + '/data/users/' + auth.value.id + '/users_in_project/?include=project_id')
-    const res = await fetch(dbApi + '/data/users_in_project/' + `?include=project_id&filter=user_id=${auth.value.id}`)
-    // const res = await fetch(dbApi + '/data/users_in_company/' + auth.value.id + '?include=projects')
-    
-    if (!res.ok) {
-      throw new Error('Failed to fetch projects')
-    }
-    
-    const data = await res.json()
-
-    console.log("data",data)
-    
-    // Process projects and add mock data
-    // const projectsData = data.includes || []
-    let projectsData = data.includes || []
-    
-    // Fetch phase information for each project
-    projects.value = await Promise.all(
-      projectsData.map(async (project) => {
-        return project
-      })
-    )
-  } catch (err) {
-    console.error('Failed to fetch projects:', err)
+    await fetchProjects(projects)
+  } catch (error) {
+    console.error('Error loading projects:', error)
+  } finally {
+    loading.value = false
   }
 })
 </script>

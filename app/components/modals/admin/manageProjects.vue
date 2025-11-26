@@ -127,7 +127,7 @@
                 placeholder="Enter clients's email address"
                 />
                 <div>
-                <button @click="handleSendEmail(newClientEmail)">
+                <button @click="handleInviteClient(newClientEmail)">
                   Click to send email
                 </button>
               </div>
@@ -166,10 +166,8 @@ const props = defineProps({
   }
 })
 
-async function handleSendEmail(email) {
+async function handleInviteClient(email) {
     
-    const { company } = useUser();
-
     const inviteType = "client"
     const entityId = newClientProjectId.value;
     const res = await fetch('/api/sendInviteEmail', {

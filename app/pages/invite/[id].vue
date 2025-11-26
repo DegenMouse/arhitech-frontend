@@ -101,6 +101,8 @@
     const {profile,auth} = useUser();
     const route = useRoute();
 
+    const dbApi = useRuntimeConfig().public.dbApi
+
     const entityType = route.query.enType;
     const entityId = route.query.enId;
     
@@ -172,32 +174,76 @@
       return 'Entitate'
     }
 
-    function getEntityInfo() {
-      if (entityType === 'company') {
-        return entityName.value ? `Compania: ${entityName.value}` : `Compania: ${entityId}`
-      } else if (entityType === 'client') {
-        return entityName.value ? `Proiectul: ${entityName.value}` : `Proiectul: ${entityId}`
-      }
-      return entityName.value || entityId
-    }
+    // function getEntityInfo() {
+    //   if (entityType === 'company') {
+    //     return entityName.value ? `Compania: ${entityName.value}` : `Compania: ${entityId}`
+    //   } else if (entityType === 'client') {
+    //     return entityName.value ? `Proiectul: ${entityName.value}` : `Proiectul: ${entityId}`
+    //   }
+    //   return entityName.value || entityId
+    // }
 
     async function handleInvite(token, inviteType) {
-        const res = await fetch('/api/validateInviteEmail', {
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            token: token,
-            inviteType: inviteType,
-            userEmail: profile.value.email,
-            userId: auth.value.id
-        })
-      })
-        if(!res.ok)
-            console.log("Diddy works here");
-        console.log(res.text)
+      //   const res = await fetch('/api/validateInviteEmail', {
+      //   method: 'POST', 
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //       token: token,
+      //       inviteType: inviteType,
+      //       userEmail: profile.value.email,
+      //       userId: auth.value.id
+      //   })
+      // })
+      //   if(!res.ok)
+      //       console.log("Diddy works here");
+      //   console.log(res.text)
+
+        if (entityType === 'client'){
+          handleAddClientToRoom()
+        }
+
+
     
     } 
+
+    async function handleAddClientToRoom() {
+        // fetch possible existing chatRooms
+        // const res = await fetch(dbApi + '/data/chatRooms/?filter=project_id=' + entityId, {
+        //   method: 'GET',
+        // })
+        // if(!res.ok) {
+        //   throw new Error('Failed to fetch')
+        // }
+        // const parsedResult = await res.json()
+        // console.log(parsedResult.data.length)
+        // const chatRoomId = ''
+        // // in case of not existing create a new one
+        // if (parsedResult.data.length !=0 ) {
+        //   chatRoomId = parsedResult.data[0].id
+        // }
+        // else {
+        //   console.log("else")
+        //   const res = await fetch(dbApi + 'data/chatRooms', {
+        //     method: 'POST',
+        //     headers: {
+        //     'Content-Type': 'application/json'
+        //     },
+        //     body: JSON.stringify({
+        //       data: { attributes: { project_id: entityId, name: entityName.value} }
+        //   })
+        //   })
+        //   const parsedResult = await res.json()
+        //   console.log(parsedResult)
+        // }
+      
+      
+
+    }
+
+
 </script>
+
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
