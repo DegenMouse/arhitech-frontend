@@ -104,6 +104,7 @@ export default eventHandler(async (event) => {
     else {
       console.log(`${data.inviteType} ${data.email}`);
       console.log(`${inviteType} ${userEmail}`);
+      console.log("nu este valid");
     }
 
 })

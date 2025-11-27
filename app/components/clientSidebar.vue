@@ -43,9 +43,9 @@
         </NuxtLink>
         
         <!-- Projects link with improved styling -->
-        <NuxtLink to="/client/chat" 
+        <NuxtLink to="/client/chats" 
           class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-100 group"
-          :class="$route.path.startsWith('/client/chat')
+          :class="$route.path.startsWith('/client/chats')
             ? 'bg-[#0743ae]/10 text-[#0743ae] border-2 border-[#0743ae]/30' 
             : 'text-gray-700 hover:bg-gray-100 hover:text-[#0743ae]'">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

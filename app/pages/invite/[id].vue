@@ -42,7 +42,7 @@
           <div v-if="entityId" class="bg-gradient-to-r from-[#0743ae]/10 to-blue-100 rounded-2xl p-5 border-2 border-[#0743ae]/20">
             <div class="flex items-center justify-center space-x-3">
               <div class="p-2 bg-[#0743ae]/20 rounded-full">
-                <svg v-if="entityType === 'company'" class="w-5 h-5 text-[#0743ae]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-if="entityType === 'team-member'" class="w-5 h-5 text-[#0743ae]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                 </svg>
                 <svg v-else-if="entityType === 'client'" class="w-5 h-5 text-[#0743ae]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,7 +60,7 @@
                   {{ entityName }}
                 </div>
                 <div v-else class="text-lg font-medium text-gray-500">
-                  {{ entityType === 'company' ? 'Companie' : entityType === 'client' ? 'Proiect' : 'Entitate' }}
+                  {{ entityType === 'team-member' ? 'Companie' : entityType === 'client' ? 'Proiect' : 'Entitate' }}
                 </div>
                 <div class="text-sm text-gray-600">
                   {{ getEntitySubtitle() }}
@@ -84,7 +84,7 @@
         <!-- Additional info -->
         <div class="text-center mt-6">
           <p class="text-sm text-gray-500">
-            Apasă butonul pentru a accepta invitația și a te alătura {{ entityType === 'company' ? 'companiei' : 'proiectului' }}.
+            Apasă butonul pentru a accepta invitația și a te alătura {{ entityType === 'team-member' ? 'companiei' : 'proiectului' }}.
           </p>
         </div>
       </div>
@@ -121,7 +121,7 @@
         const config = useRuntimeConfig();
         const dbApi = config.public.dbApi;
         
-        if (entityType === 'company') {
+        if (entityType === 'team-member') {
           const res = await fetch(`${dbApi}/data/companies/${entityId}`);
           if (res.ok) {
             const data = await res.json();
@@ -148,16 +148,17 @@
 
     // Helper functions for Romanian text
     function getInviteTitle() {
-      if (entityType === 'company') {
-        return 'Invitație la Companie'
+      if (entityType === 'team-member') {
+        return 'Invitație la Echipă'
       } else if (entityType === 'client') {
         return 'Invitație la Proiect'
+      } else {
+        return 'Invitație'
       }
-      return 'Invitație'
     }
 
     function getInviteMessage() {
-      if (entityType === 'company') {
+      if (entityType === 'team-member') {
         return 'Ai fost invitat să te alături unei companii pe platforma ArhiTech. Acceptă invitația pentru a începe să colaborezi cu echipa.'
       } else if (entityType === 'client') {
         return 'Ai fost invitat să te alături unui proiect pe platforma ArhiTech. Acceptă invitația pentru a începe să lucrezi la acest proiect.'
@@ -166,7 +167,7 @@
     }
 
     function getEntitySubtitle() {
-      if (entityType === 'company') {
+      if (entityType === 'team-member') {
         return 'Companie'
       } else if (entityType === 'client') {
         return 'Proiect'
@@ -184,23 +185,27 @@
     // }
 
     async function handleInvite(token, inviteType) {
-      //   const res = await fetch('/api/validateInviteEmail', {
-      //   method: 'POST', 
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //       token: token,
-      //       inviteType: inviteType,
-      //       userEmail: profile.value.email,
-      //       userId: auth.value.id
-      //   })
-      // })
-      //   if(!res.ok)
-      //       console.log("Diddy works here");
-      //   console.log(res.text)
-
-        if (entityType === 'client'){
-          handleAddClientToRoom()
+        const res = await fetch('/api/validateInviteEmail', {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            token: token,
+            inviteType: inviteType,
+            userEmail: profile.value.email,
+            userId: auth.value.id
+        })
+      })
+        // TODO: Implement redirect check
+        if(!res.ok)
+            console.log("Diddy works here");
+        else
+        {
+          navigateTo('/arhitect/companyMember')
         }
+
+        // if (entityType === 'client'){
+        //   handleAddClientToRoom()
+        // }
 
 
     
@@ -208,33 +213,33 @@
 
     async function handleAddClientToRoom() {
         // fetch possible existing chatRooms
-        // const res = await fetch(dbApi + '/data/chatRooms/?filter=project_id=' + entityId, {
-        //   method: 'GET',
-        // })
-        // if(!res.ok) {
-        //   throw new Error('Failed to fetch')
-        // }
-        // const parsedResult = await res.json()
-        // console.log(parsedResult.data.length)
-        // const chatRoomId = ''
-        // // in case of not existing create a new one
-        // if (parsedResult.data.length !=0 ) {
-        //   chatRoomId = parsedResult.data[0].id
-        // }
-        // else {
-        //   console.log("else")
-        //   const res = await fetch(dbApi + 'data/chatRooms', {
-        //     method: 'POST',
-        //     headers: {
-        //     'Content-Type': 'application/json'
-        //     },
-        //     body: JSON.stringify({
-        //       data: { attributes: { project_id: entityId, name: entityName.value} }
-        //   })
-        //   })
-        //   const parsedResult = await res.json()
-        //   console.log(parsedResult)
-        // }
+        const res = await fetch(dbApi + '/data/chatRooms/?filter=project_id=' + entityId, {
+          method: 'GET',
+        })
+        if(!res.ok) {
+          throw new Error('Failed to fetch')
+        }
+        const parsedResult = await res.json()
+        console.log(parsedResult.data.length)
+        const chatRoomId = ''
+        // in case of not existing create a new one
+        if (parsedResult.data.length !=0 ) {
+          chatRoomId = parsedResult.data[0].id
+        }
+        else {
+          console.log("else")
+          const res = await fetch(dbApi + 'data/chatRooms', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              data: { attributes: { project_id: entityId, name: entityName.value} }
+          })
+          })
+          const parsedResult = await res.json()
+          console.log(parsedResult)
+        }
       
       
 
