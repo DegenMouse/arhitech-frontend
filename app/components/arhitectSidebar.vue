@@ -88,7 +88,7 @@
     </nav>
     
     <!-- Enhanced user account section -->
-    <div class="p-4 border-t-2 border-gray-300">
+    <div class="p-1 border-t-2 border-gray-300">
       <!-- User info button with improved styling -->
       <button 
         @click="toggleMenu = !toggleMenu" 
